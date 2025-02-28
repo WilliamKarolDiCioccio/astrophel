@@ -5,41 +5,39 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "fl_nodes",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "fl_nodes (profile mode)",
+            "name": "legacy_compiler",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "args": [
+                "-v",
+                "-f",
+                "assets/sample.ap"
+            ],
+            "cwd": "${workspaceFolder}/legacy_compiler"
         },
         {
-            "name": "fl_nodes (release mode)",
+            "name": "legacy_compiler (profile mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "profile",
+            "args": [
+                "-v",
+                "-f",
+                "assets/sample.ap"
+            ],
+            "cwd": "${workspaceFolder}/legacy_compiler"
         },
         {
-            "name": "example",
-            "cwd": "example",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "example (profile mode)",
-            "cwd": "example",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "example (release mode)",
-            "cwd": "example",
+            "name": "legacy_compiler (release mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "args": [
+                "-v",
+                "-f",
+                "assets/sample.ap"
+            ],
+            "cwd": "${workspaceFolder}/legacy_compiler"
         }
     ]
 }
