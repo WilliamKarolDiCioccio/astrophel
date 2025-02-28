@@ -1,71 +1,7 @@
-// ignore_for_file: constant_identifier_names, unnecessary_string_escapes
+// ignore_for_file: unnecessary_string_escapes
 
-// We ignore a few naming convention warnings because some lowercase names would conflict with dart's itself keywords.
-enum TokenType {
-  // Single-character tokens.
-  LEFT_PAREN,
-  RIGHT_PAREN,
-  LEFT_BRACE,
-  RIGHT_BRACE,
-  COMMA,
-  SEMICOLON,
-  PLUS,
-  MINUS,
-  STAR,
-  SLASH,
-  // One or two character tokens.
-  BANG,
-  BANG_EQUAL,
-  EQUAL,
-  EQUAL_EQUAL,
-  GREATER,
-  GREATER_EQUAL,
-  LESS,
-  LESS_EQUAL,
-  // Literals.
-  IDENTIFIER,
-  STRING,
-  NUMBER,
-  // Keywords.
-  IF,
-  ELSE,
-  WHILE,
-  FOR,
-  RETURN,
-  // Data types (example types with size qualifiers)
-  BOOL,
-  U8,
-  U16,
-  U32,
-  U64,
-  I8,
-  I16,
-  I32,
-  I64,
-  F32,
-  F64,
-  // End-of-file.
-  EOF,
-}
-
-/// Represents a token in the source code.
-///
-/// Tokens are the smallest meaningful units in a programming language.
-/// The lexer scans the source code and produces a sequence of tokens.
-/// Each token has a type, lexeme (the actual text in the source), and a literal value.
-///
-/// The [line] field is used for error reporting and debugging.
-class Token {
-  final TokenType type;
-  final String lexeme;
-  final dynamic literal;
-  final int line;
-
-  Token(this.type, this.lexeme, this.literal, this.line);
-
-  @override
-  String toString() => '$type $lexeme ${literal ?? ""}';
-}
+import 'token_definitions.dart';
+export 'token_definitions.dart';
 
 /// The lexer scans the source code and produces a sequence of tokens.
 ///
@@ -105,7 +41,6 @@ class Lexer {
   ///
   /// The basic idea is to combine tokens into more complex structures.
   void _secondPass() {
-    // TODO: Implement second pass for more complex language features.
     return;
   }
 
@@ -182,8 +117,7 @@ class Lexer {
         } else if (isAlpha(c)) {
           identifier();
         } else {
-          // TODO: Implement proper error reporting.
-          print("Unexpected character: $c at line $line");
+          throw UnimplementedError("Unexpected character: $c");
         }
         break;
     }
@@ -349,8 +283,11 @@ class Lexer {
 
   // Match the token type with the reserved keywords.
   static final Map<String, TokenType> keywords = {
+    'import': TokenType.IMPORT,
+    'export': TokenType.EXPORT,
     'if': TokenType.IF,
     'else': TokenType.ELSE,
+    'switch': TokenType.SWITCH,
     'while': TokenType.WHILE,
     'for': TokenType.FOR,
     'return': TokenType.RETURN,
