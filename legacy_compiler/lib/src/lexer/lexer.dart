@@ -11,9 +11,6 @@ export 'token_definitions.dart';
 /// The lexer is basically a state machine. Despite not having explicit states, you can see the
 /// submethods (e.g. [blockComment]) used in the [scanToken] method as the different states of the lexer. This design
 /// allow simple and easy-to-understand code that can be easily extended in the future.
-///
-/// Despite currently implementing a single-pass lexer, the design allows for a two-pass approach
-/// that will be useful for more complex language features in the future.
 class Lexer {
   final String source;
   final List<Token> tokens = [];
@@ -30,82 +27,123 @@ class Lexer {
       scanToken();
     }
 
-    tokens.add(Token(TokenType.EOF, '', null, line));
-
-    _secondPass();
+    addToken(TokenType.EOF);
 
     return tokens;
   }
 
-  /// Second pass can modify or reclassify tokens if context demands.
-  ///
-  /// The basic idea is to combine tokens into more complex structures.
-  void _secondPass() {
-    return;
-  }
-
   /// Scans the source code and groups characters into meaningful tokens.
   void scanToken() {
-    var c = advance();
+    final c = peek();
+
     switch (c) {
       case '(':
         addToken(TokenType.LEFT_PAREN);
+        advance();
         break;
       case ')':
-        addToken(TokenType.RIGHT_PAREN);
+        addToken(TokenType.RIGHT_PAREN, ')');
+        advance();
+        break;
+      case '[':
+        addToken(TokenType.LEFT_BRACKET, '[');
+        advance();
+        break;
+      case ']':
+        addToken(TokenType.RIGHT_BRACKET, ']');
+        advance();
         break;
       case '{':
-        addToken(TokenType.LEFT_BRACE);
+        addToken(TokenType.LEFT_BRACE, '{');
+        advance();
         break;
       case '}':
-        addToken(TokenType.RIGHT_BRACE);
+        addToken(TokenType.RIGHT_BRACE, '}');
+        advance();
         break;
+      case '.':
+        print("Adding DOT token");
+        addToken(TokenType.DOT, '.');
+        advance();
       case ',':
-        addToken(TokenType.COMMA);
+        addToken(TokenType.COMMA, ',');
+        advance();
         break;
       case ';':
-        addToken(TokenType.SEMICOLON);
+        addToken(TokenType.SEMICOLON, ';');
+        advance();
         break;
       case '+':
-        addToken(TokenType.PLUS);
+        addToken(TokenType.PLUS, '+');
+        advance();
         break;
       case '-':
-        addToken(TokenType.MINUS);
+        addToken(TokenType.MINUS, '-');
+        advance();
         break;
       case '*':
-        addToken(TokenType.STAR);
+        addToken(TokenType.STAR, '*');
+        advance();
         break;
       case '!':
-        addToken(match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
+        if (match('=')) {
+          addToken(TokenType.BANG_EQUAL);
+          advance();
+          advance();
+        } else {
+          addToken(TokenType.BANG);
+          advance();
+        }
         break;
       case '=':
-        addToken(match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
+        if (match('=')) {
+          addToken(TokenType.EQUAL_EQUAL);
+          advance();
+          advance();
+        } else {
+          addToken(TokenType.EQUAL);
+          advance();
+        }
         break;
       case '<':
-        addToken(match('=') ? TokenType.LESS_EQUAL : TokenType.LESS);
+        if (match('=')) {
+          addToken(TokenType.LESS_EQUAL);
+          advance();
+          advance();
+        } else {
+          addToken(TokenType.LESS);
+          advance();
+        }
         break;
       case '>':
-        addToken(match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+        if (match('=')) {
+          addToken(TokenType.GREATER_EQUAL);
+          advance();
+          advance();
+        } else {
+          addToken(TokenType.GREATER);
+          advance();
+        }
         break;
       case '/':
         if (match('/')) {
           // Single-line comment: skip until end of line.
-          while (peek() != '\n' && !isAtEnd()) {
-            advance();
-          }
+          singleLineComment();
         } else if (match('*')) {
           // C-style block comment (non-nested).
           blockComment();
         } else {
           addToken(TokenType.SLASH);
+          advance();
         }
         break;
       case ' ':
       case '\r':
       case '\t':
-        // Ignore whitespace.
+        advance(); // Skip whitespace.
         break;
       case '\n':
+        advance();
         line++;
         break;
       case '"':
@@ -120,6 +158,13 @@ class Lexer {
           throw UnimplementedError("Unexpected character: $c");
         }
         break;
+    }
+  }
+
+  void singleLineComment() {
+    // Consume all remaining characters in the line
+    while (peek() != '\n' && !isAtEnd()) {
+      advance();
     }
   }
 
@@ -139,17 +184,19 @@ class Lexer {
   }
 
   void identifier() {
-    while (isAlphaNumeric(peek())) {
+    while (isAlphaNumeric(peek()) && !isAtEnd()) {
       advance();
     }
-    var text = source.substring(start, current);
+
+    final text = source.substring(start, current);
     // Check if the identifier is a reserved keyword.
-    var type = keywords[text] ?? TokenType.IDENTIFIER;
+    final type = keywords[text] ?? TokenType.IDENTIFIER;
+
     addToken(type);
   }
 
   void number() {
-    while (isDigit(peek())) {
+    while (isDigit(peek()) && !isAtEnd()) {
       advance();
     }
 
@@ -161,26 +208,34 @@ class Lexer {
       }
     }
 
-    var value = double.parse(source.substring(start, current));
+    final raw = source.substring(start, current);
+    final value = double.parse(raw);
     addToken(TokenType.NUMBER, value);
   }
 
   void string() {
+    if (isAtEnd()) {
+      print("Unterminated string at line $line");
+      return;
+    } else {
+      advance(); // Consume the opening '"'
+    }
+
     // Consume until we hit an unescaped double-quote.
     while (!isAtEnd()) {
-      if (peek() == '"' && !isEscaped()) {
-        break;
-      }
-      if (peek() == '\n') line++;
+      final c = peek();
+      if (c == '"' && !isEscaped()) break;
+      if (c == '\n') line++;
+
       advance();
     }
 
     if (isAtEnd()) {
       print("Unterminated string at line $line");
       return;
+    } else {
+      advance(); // Consume the closing '"'
     }
-
-    advance(); // Consume the closing '"'
 
     // Extract the raw string content (without the surrounding quotes)
     String raw = source.substring(start + 1, current - 1);
@@ -201,15 +256,11 @@ class Lexer {
   String peekNext() =>
       (current + 1 >= source.length) ? '\0' : source[current + 1];
 
-  /// Checks if the current character matches the expected character.
-  bool match(String expected) {
-    if (isAtEnd() || source[current] != expected) return false;
-    current++;
-    return true;
-  }
-
   /// Checks if we have reached the end of the source code.
-  bool isAtEnd() => current >= source.length;
+  bool isAtEnd() => current + 1 > source.length;
+
+  /// Checks if the next character matches the expected character.
+  bool match(String expected) => !isAtEnd() && source[current + 1] == expected;
 
   /// Checks if a character is a digit.
   bool isDigit(String c) => c.compareTo('0') >= 0 && c.compareTo('9') <= 0;
@@ -267,18 +318,20 @@ class Lexer {
 
   /// Checks if the current character is escaped (only used for strings).
   bool isEscaped() {
-    int count = 0;
-    int index = current - 1;
-    while (index >= start && source[index] == '\\') {
-      count++;
-      index--;
+    int backslashes = 0;
+    for (int i = current - 1; i >= 0; i--) {
+      if (source[i] == '\\') {
+        backslashes++;
+      } else {
+        break;
+      }
     }
-    return count % 2 == 1;
+    return backslashes % 2 == 1;
   }
 
-  void addToken(TokenType type, [dynamic literal]) {
-    var text = source.substring(start, current);
-    tokens.add(Token(type, text, literal, line));
+  void addToken(TokenType type, [Object? literal]) {
+    final lexeme = source.substring(start, current);
+    tokens.add(Token(type, lexeme, literal, line));
   }
 
   // Match the token type with the reserved keywords.

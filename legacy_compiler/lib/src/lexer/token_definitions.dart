@@ -5,8 +5,11 @@ enum TokenType {
   // Single-character tokens.
   LEFT_PAREN,
   RIGHT_PAREN,
+  LEFT_BRACKET,
+  RIGHT_BRACKET,
   LEFT_BRACE,
   RIGHT_BRACE,
+  DOT,
   COMMA,
   SEMICOLON,
   PLUS,
@@ -66,6 +69,13 @@ class Token {
 
   Token(this.type, this.lexeme, this.literal, this.line);
 
+  Map<String, dynamic> toJson() => {
+    'type': type.toString(),
+    'lexeme': lexeme,
+    'literal': literal,
+    'line': line,
+  };
+
   @override
-  String toString() => '$type $lexeme ${literal ?? ""}';
+  String toString() => toJson().toString();
 }
