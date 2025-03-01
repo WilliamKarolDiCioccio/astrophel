@@ -42,51 +42,51 @@ class Lexer {
         advance();
         break;
       case ')':
-        addToken(TokenType.RIGHT_PAREN, ')');
+        addToken(TokenType.RIGHT_PAREN);
         advance();
         break;
       case '[':
-        addToken(TokenType.LEFT_BRACKET, '[');
+        addToken(TokenType.LEFT_BRACKET);
         advance();
         break;
       case ']':
-        addToken(TokenType.RIGHT_BRACKET, ']');
+        addToken(TokenType.RIGHT_BRACKET);
         advance();
         break;
       case '{':
-        addToken(TokenType.LEFT_BRACE, '{');
+        addToken(TokenType.LEFT_BRACE);
         advance();
         break;
       case '}':
-        addToken(TokenType.RIGHT_BRACE, '}');
+        addToken(TokenType.RIGHT_BRACE);
         advance();
         break;
       case '.':
         print("Adding DOT token");
-        addToken(TokenType.DOT, '.');
+        addToken(TokenType.DOT);
         advance();
       case ',':
-        addToken(TokenType.COMMA, ',');
+        addToken(TokenType.COMMA);
         advance();
         break;
       case ';':
-        addToken(TokenType.SEMICOLON, ';');
+        addToken(TokenType.SEMICOLON);
         advance();
         break;
       case '+':
-        addToken(TokenType.PLUS, '+');
+        addToken(TokenType.PLUS);
         advance();
         break;
       case '-':
-        addToken(TokenType.MINUS, '-');
+        addToken(TokenType.MINUS);
         advance();
         break;
       case '*':
-        addToken(TokenType.STAR, '*');
+        addToken(TokenType.STAR);
         advance();
         break;
       case '%':
-        addToken(TokenType.MODULUS, '%');
+        addToken(TokenType.MODULUS);
         advance();
         break;
       case '!':
@@ -334,7 +334,12 @@ class Lexer {
   }
 
   void addToken(TokenType type, [Object? literal]) {
-    final lexeme = source.substring(start, current);
+    late String lexeme;
+    if (start != current) {
+      lexeme = source.substring(start, current);
+    } else {
+      lexeme = source[current];
+    }
     tokens.add(Token(type, lexeme, literal, line));
   }
 
