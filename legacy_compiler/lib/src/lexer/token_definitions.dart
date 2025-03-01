@@ -16,6 +16,7 @@ enum TokenType {
   MINUS,
   STAR,
   SLASH,
+  MODULUS,
   // One or two character tokens.
   BANG,
   BANG_EQUAL,

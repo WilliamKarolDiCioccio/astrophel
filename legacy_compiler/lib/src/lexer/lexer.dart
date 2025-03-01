@@ -85,6 +85,10 @@ class Lexer {
         addToken(TokenType.STAR, '*');
         advance();
         break;
+      case '%':
+        addToken(TokenType.MODULUS, '%');
+        advance();
+        break;
       case '!':
         if (match('=')) {
           addToken(TokenType.BANG_EQUAL);
