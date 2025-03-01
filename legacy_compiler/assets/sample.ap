@@ -1,7 +1,0 @@
-void main() {
-    u32 x = 42;
-
-    if (x != 10) {
-        print("Hello, world!\n");
-    }
-}
