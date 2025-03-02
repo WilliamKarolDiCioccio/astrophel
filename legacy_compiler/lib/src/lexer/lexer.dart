@@ -90,7 +90,7 @@ class Lexer {
         advance();
         break;
       case '!':
-        if (match('=')) {
+        if (matchNext('=')) {
           addToken(TokenType.BANG_EQUAL);
           advance();
           advance();
@@ -100,7 +100,7 @@ class Lexer {
         }
         break;
       case '=':
-        if (match('=')) {
+        if (matchNext('=')) {
           addToken(TokenType.EQUAL_EQUAL);
           advance();
           advance();
@@ -110,7 +110,7 @@ class Lexer {
         }
         break;
       case '<':
-        if (match('=')) {
+        if (matchNext('=')) {
           addToken(TokenType.LESS_EQUAL);
           advance();
           advance();
@@ -120,7 +120,7 @@ class Lexer {
         }
         break;
       case '>':
-        if (match('=')) {
+        if (matchNext('=')) {
           addToken(TokenType.GREATER_EQUAL);
           advance();
           advance();
@@ -130,10 +130,10 @@ class Lexer {
         }
         break;
       case '/':
-        if (match('/')) {
+        if (matchNext('/')) {
           // Single-line comment: skip until end of line.
           singleLineComment();
-        } else if (match('*')) {
+        } else if (matchNext('*')) {
           // C-style block comment (non-nested).
           blockComment();
         } else {
@@ -264,7 +264,8 @@ class Lexer {
   bool isAtEnd() => current + 1 > source.length;
 
   /// Checks if the next character matches the expected character.
-  bool match(String expected) => !isAtEnd() && source[current + 1] == expected;
+  bool matchNext(String expected) =>
+      !isAtEnd() && source[current + 1] == expected;
 
   /// Checks if a character is a digit.
   bool isDigit(String c) => c.compareTo('0') >= 0 && c.compareTo('9') <= 0;
