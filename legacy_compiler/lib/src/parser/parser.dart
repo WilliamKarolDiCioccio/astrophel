@@ -30,6 +30,8 @@ class Parser {
     return parseAdditiveExpression();
   }
 
+  // Secondary expressions - Arithmetic
+
   /// Parses an arithmetic expression from the token stream.
   ExpressionNode parseAdditiveExpression() {
     var left = parseMultiplicativeExpression();
@@ -45,17 +47,43 @@ class Parser {
 
   /// Parses a multiplicative expression from the token stream.
   ExpressionNode parseMultiplicativeExpression() {
-    var left = parsePrimaryExpression();
+    var left = parseUnaryExpression();
 
     while (peek().type == TokenType.STAR ||
         peek().type == TokenType.SLASH ||
         peek().type == TokenType.MODULUS) {
       final operator = advance();
-      final right = parsePrimaryExpression();
+      final right = parseUnaryExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
 
     return left;
+  }
+
+  // Primary expressions
+
+  /// Parses a unary expression from the token stream.
+  ExpressionNode parseUnaryExpression() {
+    if (peek().type == TokenType.MINUS || peek().type == TokenType.BANG) {
+      final operator = advance(); // Now we're correctly consuming the operator
+      final right = parseUnaryExpression();
+      return UnaryExpressionNode(expression: right, operator: operator);
+    }
+
+    return parsePrimaryExpression();
+  }
+
+  /// Parses a grouping expression from the token stream.
+  ExpressionNode parseGroupingExpression() {
+    final expression = parseExpression();
+
+    if (!match(TokenType.RIGHT_PAREN)) {
+      throw UnimplementedError("Expected closing parenthesis");
+    }
+
+    advance(); // Consume the closing parenthesis
+
+    return GroupingExpressionNode(expression: expression);
   }
 
   /// Parses a primary expression from the token stream.
@@ -68,13 +96,7 @@ class Parser {
       case TokenType.IDENTIFIER:
         return IdentifierNode(name: tk);
       case TokenType.LEFT_PAREN:
-        final value = parseExpression();
-        if (!match(TokenType.RIGHT_PAREN)) {
-          throw UnimplementedError("Expected closing parenthesis");
-        } else {
-          advance(); // Consume the closing parenthesis
-          return value;
-        }
+        return parseGroupingExpression();
       default:
         throw UnimplementedError("Unexpected token: $tk");
     }

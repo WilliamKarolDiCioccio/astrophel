@@ -94,6 +94,37 @@ interface class NumericLiteralNode extends ExpressionNode {
   }
 }
 
+/// Represents a unary expression.
+interface class UnaryExpressionNode extends ExpressionNode {
+  static const ASTType type = ASTType.unary;
+  final ExpressionNode expression;
+  final Token operator;
+
+  UnaryExpressionNode({required this.expression, required this.operator});
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.toString(),
+      'expression': expression.toJson(),
+      'operator': operator.lexeme,
+    };
+  }
+}
+
+/// Represents a grouping expression.
+interface class GroupingExpressionNode extends ExpressionNode {
+  static const ASTType type = ASTType.grouping;
+  final ExpressionNode expression;
+
+  GroupingExpressionNode({required this.expression});
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {'type': type.toString(), 'expression': expression.toJson()};
+  }
+}
+
 /// Represents a binary expression.
 interface class BinaryExpressionNode extends ExpressionNode {
   static const ASTType type = ASTType.binary;
