@@ -61,6 +61,11 @@ void main(List<String> arguments) {
     for (Token token in tokens) {
       print(verbose ? token.toString() : '${token.type}');
     }
+
+    Parser parser = Parser(tokens);
+    ModuleNode module = parser.produceAST();
+
+    print(module);
   } on FormatException catch (e) {
     print(e.message);
     print('');
