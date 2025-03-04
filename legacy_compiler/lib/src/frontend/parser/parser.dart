@@ -1,6 +1,5 @@
-import '../lexer/token_definitions.dart';
-import './ast_definitions.dart';
-export 'ast_definitions.dart';
+import '../../shared/ast_definitions.dart';
+import '../../shared/token_definitions.dart';
 
 class Parser {
   final List<Token> tokens;

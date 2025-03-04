@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../lexer/token_definitions.dart';
+import 'token_definitions.dart';
 
 /// The difference between a statement and an expression is that a statement
 /// performs an action, while an expression evaluates to a value.

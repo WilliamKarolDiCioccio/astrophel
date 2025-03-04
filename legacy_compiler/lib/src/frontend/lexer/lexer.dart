@@ -1,7 +1,7 @@
 // ignore_for_file: unnecessary_string_escapes
 
-import 'token_definitions.dart';
-export 'token_definitions.dart';
+import '../../shared/token_definitions.dart';
+export '../../shared/token_definitions.dart';
 
 /// The lexer scans the source code and produces a sequence of tokens.
 ///

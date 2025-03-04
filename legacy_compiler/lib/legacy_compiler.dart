@@ -1,2 +1,2 @@
-export 'src/lexer/lexer.dart';
-export 'src/parser/parser.dart';
+export 'src/frontend/lexer/lexer.dart';
+export 'src/frontend/parser/parser.dart';
