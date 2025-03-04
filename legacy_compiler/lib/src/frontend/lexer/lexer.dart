@@ -73,6 +73,14 @@ class Lexer {
         addToken(TokenType.SEMICOLON);
         advance();
         break;
+      case ':':
+        addToken(TokenType.COLON);
+        advance();
+        break;
+      case '?':
+        addToken(TokenType.QUESTION);
+        advance();
+        break;
       case '+':
         addToken(TokenType.PLUS);
         advance();
@@ -90,44 +98,26 @@ class Lexer {
         advance();
         break;
       case '!':
-        if (matchNext('=')) {
-          addToken(TokenType.BANG_EQUAL);
-          advance();
-          advance();
-        } else {
-          addToken(TokenType.BANG);
-          advance();
-        }
+        scanDoubleToken('=', TokenType.BANG_EQUAL, TokenType.BANG);
         break;
       case '=':
-        if (matchNext('=')) {
-          addToken(TokenType.EQUAL_EQUAL);
-          advance();
-          advance();
-        } else {
-          addToken(TokenType.EQUAL);
-          advance();
-        }
+        scanDoubleToken('=', TokenType.EQUAL_EQUAL, TokenType.EQUAL);
         break;
       case '<':
-        if (matchNext('=')) {
-          addToken(TokenType.LESS_EQUAL);
-          advance();
-          advance();
-        } else {
-          addToken(TokenType.LESS);
-          advance();
-        }
+        scanDoubleToken('=', TokenType.LESS_EQUAL, TokenType.LESS);
         break;
       case '>':
-        if (matchNext('=')) {
-          addToken(TokenType.GREATER_EQUAL);
-          advance();
-          advance();
-        } else {
-          addToken(TokenType.GREATER);
-          advance();
-        }
+        scanDoubleToken('=', TokenType.GREATER_EQUAL, TokenType.GREATER);
+        break;
+      case '&':
+        scanDoubleToken(
+          '&',
+          TokenType.AMPERSAND_AMPERSAND,
+          TokenType.AMPERSAND,
+        );
+        break;
+      case '|':
+        scanDoubleToken('|', TokenType.PIPE_PIPE, TokenType.PIPE);
         break;
       case '/':
         if (matchNext('/')) {
@@ -162,6 +152,21 @@ class Lexer {
           throw UnimplementedError("Unexpected character: $c");
         }
         break;
+    }
+  }
+
+  void scanDoubleToken(
+    String nextC,
+    TokenType doubleType,
+    TokenType singleType,
+  ) {
+    if (matchNext(nextC)) {
+      addToken(doubleType);
+      advance();
+      advance();
+    } else {
+      addToken(singleType);
+      advance();
     }
   }
 
