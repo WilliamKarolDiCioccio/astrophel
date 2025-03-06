@@ -14,7 +14,6 @@ export '../../shared/token_definitions.dart';
 class Lexer {
   final String source;
   final List<Token> tokens = [];
-  int start = 0;
   int current = 0;
   int line = 1;
 
@@ -23,78 +22,78 @@ class Lexer {
   /// The main entry point that runs the two-pass lexing.
   List<Token> tokenize() {
     while (!isAtEnd()) {
-      start = current;
       scanToken();
     }
 
-    addToken(TokenType.EOF);
+    // Always add an EOF token at the end with null terminator as lexeme
+    addToken(TokenType.EOF, lexeme: '\0');
 
     return tokens;
   }
 
   /// Scans the source code and groups characters into meaningful tokens.
   void scanToken() {
-    final c = peek();
+    final char = peek();
 
-    switch (c) {
+    switch (char) {
       case '(':
-        addToken(TokenType.LEFT_PAREN);
+        addToken(TokenType.LEFT_PAREN, lexeme: source[current]);
         advance();
         break;
       case ')':
-        addToken(TokenType.RIGHT_PAREN);
+        addToken(TokenType.RIGHT_PAREN, lexeme: source[current]);
         advance();
         break;
       case '[':
-        addToken(TokenType.LEFT_BRACKET);
+        addToken(TokenType.LEFT_BRACKET, lexeme: source[current]);
         advance();
         break;
       case ']':
-        addToken(TokenType.RIGHT_BRACKET);
+        addToken(TokenType.RIGHT_BRACKET, lexeme: source[current]);
         advance();
         break;
       case '{':
-        addToken(TokenType.LEFT_BRACE);
+        addToken(TokenType.LEFT_BRACE, lexeme: source[current]);
         advance();
         break;
       case '}':
-        addToken(TokenType.RIGHT_BRACE);
+        addToken(TokenType.RIGHT_BRACE, lexeme: source[current]);
         advance();
         break;
       case '.':
-        print("Adding DOT token");
-        addToken(TokenType.DOT);
+        addToken(TokenType.DOT, lexeme: source[current]);
         advance();
+        break;
       case ',':
-        addToken(TokenType.COMMA);
+        addToken(TokenType.COMMA, lexeme: source[current]);
         advance();
         break;
       case ';':
-        addToken(TokenType.SEMICOLON);
+        addToken(TokenType.SEMICOLON, lexeme: source[current]);
         advance();
         break;
       case ':':
-        addToken(TokenType.COLON);
+        addToken(TokenType.COLON, lexeme: source[current]);
         advance();
         break;
       case '?':
-        addToken(TokenType.QUESTION);
+        addToken(TokenType.QUESTION, lexeme: source[current]);
         advance();
         break;
       case '+':
-        addToken(TokenType.PLUS);
+        addToken(TokenType.PLUS, lexeme: source[current]);
         advance();
         break;
       case '-':
-        addToken(TokenType.MINUS);
+        addToken(TokenType.MINUS, lexeme: source[current]);
         advance();
         break;
       case '*':
-        addToken(TokenType.STAR);
+        addToken(TokenType.STAR, lexeme: source[current]);
         advance();
         break;
       case '%':
-        addToken(TokenType.MODULUS);
+        addToken(TokenType.MODULUS, lexeme: source[current]);
         advance();
         break;
       case '!':
@@ -121,20 +120,20 @@ class Lexer {
         break;
       case '/':
         if (matchNext('/')) {
-          // Single-line comment: skip until end of line.
+          // Single-line comment: skip until end of line
           singleLineComment();
         } else if (matchNext('*')) {
-          // C-style block comment (non-nested).
+          // C-style block comment (non-nested)
           blockComment();
         } else {
-          addToken(TokenType.SLASH);
+          addToken(TokenType.SLASH, lexeme: source[current]);
           advance();
         }
         break;
       case ' ':
       case '\r':
       case '\t':
-        advance(); // Skip whitespace.
+        advance(); // Skip whitespace
         break;
       case '\n':
         advance();
@@ -144,28 +143,28 @@ class Lexer {
         string();
         break;
       default:
-        if (isDigit(c)) {
+        if (isDigit(char)) {
           number();
-        } else if (isAlpha(c)) {
+        } else if (isAlpha(char)) {
           identifier();
         } else {
-          throw UnimplementedError("Unexpected character: $c");
+          throw UnimplementedError("Unexpected character: $char");
         }
         break;
     }
   }
 
   void scanDoubleToken(
-    String nextC,
+    String nextChar,
     TokenType doubleType,
     TokenType singleType,
   ) {
-    if (matchNext(nextC)) {
-      addToken(doubleType);
+    if (matchNext(nextChar)) {
       advance();
       advance();
+      addToken(doubleType, lexeme: source.substring(current - 2, current));
     } else {
-      addToken(singleType);
+      addToken(singleType, lexeme: source[current]);
       advance();
     }
   }
@@ -193,23 +192,27 @@ class Lexer {
   }
 
   void identifier() {
+    final start = current;
+
     while (isAlphaNumeric(peek()) && !isAtEnd()) {
       advance();
     }
 
     final text = source.substring(start, current);
-    // Check if the identifier is a reserved keyword.
+    // Check if the identifier is a reserved keyword
     final type = keywords[text] ?? TokenType.IDENTIFIER;
 
-    addToken(type);
+    addToken(type, lexeme: text);
   }
 
   void number() {
+    final start = current;
+
     while (isDigit(peek()) && !isAtEnd()) {
       advance();
     }
 
-    // Look for a fractional part.
+    // Look for a fractional part
     if (peek() == '.' && isDigit(peekNext())) {
       advance(); // consume '.'
       while (isDigit(peek())) {
@@ -217,12 +220,20 @@ class Lexer {
       }
     }
 
+    // Extract the raw number string
     final raw = source.substring(start, current);
+    // Parse the number as a double (type is not a lexer concern)
     final value = double.parse(raw);
-    addToken(TokenType.NUMBER, value);
+
+    addToken(TokenType.NUMBER, lexeme: raw, literal: value);
   }
 
   void string() {
+    // Reset for each string fragment
+    var start = current;
+    // If at any point in a string there is an interpolation, the string is a fragment
+    var isFragment = false;
+
     if (isAtEnd()) {
       print("Unterminated string at line $line");
       return;
@@ -230,11 +241,41 @@ class Lexer {
       advance(); // Consume the opening '"'
     }
 
-    // Consume until we hit an unescaped double-quote.
+    // Consume until we hit an unescaped double-quote
     while (!isAtEnd()) {
       final c = peek();
+
+      // Check for string closing
       if (c == '"' && !isEscaped()) break;
+
+      // Track line numbers
       if (c == '\n') line++;
+
+      // String interpolation
+      if (c == '\$' && !isEscaped()) {
+        // Extract the raw string content (without the surrounding quotes)
+        String raw = source.substring(
+          isFragment ? start : start + 1,
+          current - 1,
+        );
+
+        addToken(
+          TokenType.STRING_FRAGMENT,
+          lexeme: source.substring(start, current - 1),
+          literal: processEscapeSequences(raw),
+        );
+
+        if (matchNext('{')) {
+          expressionInterpolation(); // Parse the expression interpolation
+        } else {
+          identifierInterpolation(); // Parse the identifier interpolation
+        }
+
+        start = current;
+        isFragment = true;
+
+        continue;
+      }
 
       advance();
     }
@@ -247,10 +288,52 @@ class Lexer {
     }
 
     // Extract the raw string content (without the surrounding quotes)
-    String raw = source.substring(start + 1, current - 1);
-    // Process escape sequences so the stored literal is 'clean'
-    String processed = processEscapeSequences(raw);
-    addToken(TokenType.STRING, processed);
+    String raw = source.substring(isFragment ? start : start + 1, current - 1);
+
+    addToken(
+      isFragment ? TokenType.STRING_FRAGMENT : TokenType.STRING,
+      lexeme: source.substring(start, current),
+      literal: processEscapeSequences(raw),
+    );
+  }
+
+  void identifierInterpolation() {
+    advance(); // Consume the '$'
+    addToken(TokenType.IDENTIFIER_INTERPOLATION, lexeme: '\$');
+    identifier(); // Parse the identifier
+  }
+
+  void expressionInterpolation() {
+    var nestingCounter = 1;
+
+    advance(); // Consume the '$'
+    advance(); // Consume the '{'
+    addToken(
+      TokenType.EXPRESSION_INTERPOLATION_START,
+      lexeme: source.substring(current - 2, current),
+    );
+
+    while (!isAtEnd() && nestingCounter > 0) {
+      if (peek() == '{' && !isEscaped()) {
+        nestingCounter++;
+        advance();
+      } else if (peek() == '}' && !isEscaped()) {
+        nestingCounter--;
+
+        if (nestingCounter == 0) {
+          addToken(
+            TokenType.EXPRESSION_INTERPOLATION_END,
+            lexeme: source[current],
+          );
+        }
+
+        advance();
+      }
+
+      if (nestingCounter > 0) {
+        scanToken();
+      }
+    }
   }
 
   // Utility methods
@@ -289,13 +372,15 @@ class Lexer {
   /// This method is used to convert escape sequences in a raw string literal
   /// into their corresponding characters. For example, the sequence '\n' is
   /// converted into a newline character.
-  String processEscapeSequences(String s) {
+  String processEscapeSequences(String str) {
     var buffer = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      var c = s[i];
-      if (c == '\\' && i + 1 < s.length) {
+
+    for (int i = 0; i < str.length; i++) {
+      var char = str[i];
+
+      if (char == '\\' && i + 1 < str.length) {
         // Look at the next character to determine the escape sequence.
-        var next = s[i + 1];
+        var next = str[i + 1];
         i++; // Skip the backslash.
         switch (next) {
           case 'n':
@@ -320,15 +405,17 @@ class Lexer {
             break;
         }
       } else {
-        buffer.write(c);
+        buffer.write(char);
       }
     }
+
     return buffer.toString();
   }
 
   /// Checks if the current character is escaped (only used for strings).
   bool isEscaped() {
     int backslashes = 0;
+
     for (int i = current - 1; i >= 0; i--) {
       if (source[i] == '\\') {
         backslashes++;
@@ -336,16 +423,11 @@ class Lexer {
         break;
       }
     }
+
     return backslashes % 2 == 1;
   }
 
-  void addToken(TokenType type, [Object? literal]) {
-    late String lexeme;
-    if (start != current) {
-      lexeme = source.substring(start, current);
-    } else {
-      lexeme = source[current];
-    }
+  void addToken(TokenType type, {required String lexeme, dynamic literal}) {
     tokens.add(Token(type, lexeme, literal, line));
   }
 
