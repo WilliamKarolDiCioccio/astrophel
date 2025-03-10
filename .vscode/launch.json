@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "legacy_compiler",
+            "name": "Legacy Compiler Cli (debug)",
             "request": "launch",
             "type": "dart",
             "args": [
@@ -13,10 +13,10 @@
                 "-f",
                 "assets/testing/sample.ap"
             ],
-            "cwd": "${workspaceFolder}/legacy_compiler"
+            "cwd": "${workspaceFolder}/legacy/compiler_cli"
         },
         {
-            "name": "legacy_compiler (profile mode)",
+            "name": "Legacy Compiler Cli (profile)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
@@ -25,10 +25,10 @@
                 "-f",
                 "assets/testing/sample.ap"
             ],
-            "cwd": "${workspaceFolder}/legacy_compiler"
+            "cwd": "${workspaceFolder}/legacy/compiler_cli"
         },
         {
-            "name": "legacy_compiler (release mode)",
+            "name": "Legacy Compiler Cli (release)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
@@ -37,7 +37,7 @@
                 "-f",
                 "assets/testing/sample.ap"
             ],
-            "cwd": "${workspaceFolder}/legacy_compiler"
+            "cwd": "${workspaceFolder}/legacy/compiler_cli"
         }
     ]
 }

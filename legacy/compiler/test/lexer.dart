@@ -1,4 +1,4 @@
-import 'package:legacy_compiler/legacy_compiler.dart';
+import 'package:compiler/compiler.dart';
 import 'package:test/test.dart';
 
 void main() {
