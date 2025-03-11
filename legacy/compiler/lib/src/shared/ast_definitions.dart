@@ -3,8 +3,7 @@ import 'dart:convert';
 export 'ast_expressions.dart';
 export 'ast_statements.dart';
 
-/// The difference between a statement and an expression is that a statement
-/// performs an action, while an expression evaluates to a value.
+/// NOTE: Details can be found in the corresponding statement or expression node.
 enum ASTType {
   // Top-level program structure.
   module,
@@ -13,23 +12,30 @@ enum ASTType {
   // Declarations.
   variableDeclaration,
   functionDeclaration,
-  parameter,
+  structDeclaration,
+  enumDeclaration,
+  // Function
+  functionParameter,
   // Expressions.
-  numericLiteral, // e.g., 42, 3.14
-  stringLiteral, // e.g., "Hello, world!"
-  stringFragment, // e.g., "Hello, ...", any non opened/closed string literal part of a string interpolation.
+  numericLiteral,
+  stringLiteral,
+  stringFragment,
   stringIdentifierInterpolation,
   stringExpressionInterpolation,
-  identifier, // Variable names, function names.
-  binary, // Binary operations, e.g., a + b.
-  unary, // Unary operations, e.g., -a.
-  postfix, // Postfix operations, e.g., a++.
-  call, // Function calls, e.g., foo(a, b).
-  grouping, // Grouping expressions, e.g., (a + b)
+  identifier,
+  ternary,
+  binary,
+  unary,
+  postfix,
+  call,
+  indexAccess,
+  identifierAccess,
+  closure,
+  grouping,
   // Statements.
-  block, // { ... } block of statements.
-  expressionStatement, // Expression used as a statement.
-  assignment, // Assignment expression.
+  block,
+  expressionStatement,
+  assignment,
   ifStatement,
   elseStatement,
   switchStatement,
@@ -37,14 +43,18 @@ enum ASTType {
   forStatement,
   returnStatement,
   // Type annotation.
-  typeAnnotation, // e.g., u16, f32
+  typeAnnotation,
 }
+
+// NOTE: I'm not using the `interface` keyword here because Dart doesn't allow for
+// extending classes with `interface` outside of the same library. This would require
+// redefining the toString method in each class that implements the interface.
 
 /// Base class for all AST statement nodes.
 ///
-/// NOTE: I'm not using the `interface` keyword here because Dart doesn't allow for
-/// extending classes with `interface` outside of the same library. This would require
-/// redefining the toString method in each class that implements the interface.
+/// This class is used to represent a statement in the AST. A statement is a
+/// single instruction that performs an action. For example, a variable
+/// declaration, a function declaration, or an if statement.
 abstract class StatementNode {
   Map<String, dynamic> toJson();
 
@@ -53,4 +63,8 @@ abstract class StatementNode {
 }
 
 /// Represents an expression node.
+///
+/// This class is used to represent an expression in the AST. An expression is a
+/// combination of values, variables, operators, and function calls that are
+/// evaluated to produce a result. Expressions are a subset of statements.
 abstract class ExpressionNode extends StatementNode {}

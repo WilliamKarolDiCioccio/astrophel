@@ -26,19 +26,58 @@ class Parser {
 
   /// Parses an expression from the token stream.
   ExpressionNode parseExpression() {
-    return parseAssignmentExpression();
+    return parseLamdaExpression();
+  }
+
+  /// Parses a closure expression from the token stream.
+  ExpressionNode parseLamdaExpression() {
+    return parseTernaryExpression();
+  }
+
+  /// Parses a ternary expression from the token stream (inlined if-else).
+  ExpressionNode parseTernaryExpression() {
+    ExpressionNode condition = parseAssignmentExpression();
+
+    if (match(TokenType.QUESTION)) {
+      advance(); // Consume the QUESTION token
+
+      ExpressionNode thenBranch = parseTernaryExpression();
+
+      if (!match(TokenType.COLON)) {
+        throw UnimplementedError("Expected colon token for ternary expression");
+      }
+
+      advance(); // Consume the COLON token
+
+      ExpressionNode elseBranch = parseTernaryExpression();
+
+      return TernaryExpressionNode(
+        condition: condition,
+        thenBranch: thenBranch,
+        elseBranch: elseBranch,
+      );
+    }
+
+    return condition;
   }
 
   /// Parses an assignment expression from the token stream.
   ExpressionNode parseAssignmentExpression() {
     ExpressionNode expression = parseLogicalExpression();
 
-    if (match(TokenType.EQUAL)) {
+    if (match(TokenType.EQUAL) ||
+        match(TokenType.PLUS_EQUAL) ||
+        match(TokenType.MINUS_EQUAL) ||
+        match(TokenType.STAR_EQUAL) ||
+        match(TokenType.SLASH_EQUAL) ||
+        match(TokenType.MODULUS_EQUAL)) {
       final operator = advance();
 
       final ExpressionNode value = parseAssignmentExpression();
 
-      if (expression is IdentifierNode) {
+      if (expression is IdentifierNode ||
+          expression is IdentifierAccessExpressionNode ||
+          expression is IndexAccessExpressionNode) {
         return AssignmentExpressionNode(
           target: expression,
           value: value,
@@ -113,13 +152,13 @@ class Parser {
 
   /// Parses a multiplicative expression from the token stream.
   ExpressionNode parseMultiplicativeExpression() {
-    var left = parseUnaryExpression();
+    var left = parsePrefixExpression();
 
     while (peek().type == TokenType.STAR ||
         peek().type == TokenType.SLASH ||
         peek().type == TokenType.MODULUS) {
       final operator = advance();
-      final right = parseUnaryExpression();
+      final right = parsePrefixExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
 
@@ -129,14 +168,14 @@ class Parser {
   // Primary expressions
 
   /// Parses a unary expression from the token stream.
-  ExpressionNode parseUnaryExpression() {
+  ExpressionNode parsePrefixExpression() {
     if (peek().type == TokenType.MINUS ||
         peek().type == TokenType.BANG ||
         peek().type == TokenType.INCREMENT ||
         peek().type == TokenType.DECREMENT) {
       final operator = advance();
-      final right = parseUnaryExpression();
-      return UnaryExpressionNode(expression: right, operator: operator);
+      final right = parsePostfixExpression();
+      return UnaryExpressionNode(operand: right, operator: operator);
     }
 
     return parsePostfixExpression();
@@ -147,11 +186,48 @@ class Parser {
     ExpressionNode expression = parsePrimaryExpression();
 
     while (true) {
-      if (match(TokenType.INCREMENT) || match(TokenType.DECREMENT)) {
+      if (match(TokenType.DOT)) {
+        advance(); // Consume the dot token
+
+        if (!match(TokenType.IDENTIFIER)) {
+          throw UnimplementedError("Expected identifier after dot token");
+        }
+
+        expression = IdentifierAccessExpressionNode(
+          object: expression,
+          dot: tokens[current - 1],
+          name: advance(),
+        );
+      } else if (match(TokenType.INCREMENT) || match(TokenType.DECREMENT)) {
         final operator = advance();
-        expression = PostfixExpressionNode(
+        expression = UnaryExpressionNode(
           operand: expression,
           operator: operator,
+        );
+      } else if (match(TokenType.LEFT_PAREN)) {
+        final arguments = parseArguments();
+        expression = CallExpressionNode(
+          callee: expression,
+          paren: tokens[current - 1],
+          arguments: arguments,
+        );
+      } else if (match(TokenType.LEFT_BRACKET)) {
+        advance(); // Consume the opening bracket
+
+        final index = parseExpression();
+
+        if (!match(TokenType.RIGHT_BRACKET)) {
+          throw UnimplementedError(
+            "Expected closing bracket for index expression",
+          );
+        }
+
+        advance(); // Consume the closing bracket
+
+        expression = IndexAccessExpressionNode(
+          object: expression,
+          bracket: tokens[current - 1],
+          index: index,
         );
       } else {
         break;
@@ -160,6 +236,8 @@ class Parser {
 
     return expression;
   }
+
+  /// Parses an index expression from the token stream.
 
   /// Parses a grouping expression from the token stream.
   ExpressionNode parseGroupingExpression() {
@@ -181,7 +259,9 @@ class Parser {
     List<ExpressionNode> fragments = [];
 
     if (!match(TokenType.STRING_FRAGMENT_START)) {
-      throw FormatException("Expected string fragment start token");
+      throw UnimplementedError(
+        "Expected string fragment start token: ${peek()}",
+      );
     }
 
     fragments.add(StringFragmentNode(value: peek()));
@@ -201,7 +281,7 @@ class Parser {
         advance(); // Consume the IDENTIFIER_INTERPOLATION token
 
         if (!match(TokenType.IDENTIFIER)) {
-          throw FormatException("Expected identifier interpolation token");
+          throw UnimplementedError("Expected identifier interpolation token");
         }
 
         fragments.add(IdentifierNode(name: peek()));
@@ -213,7 +293,7 @@ class Parser {
         ExpressionNode interpolatedExpr = parseExpression();
 
         if (!match(TokenType.EXPRESSION_INTERPOLATION_END)) {
-          throw FormatException(
+          throw UnimplementedError(
             "Expected end token for expression interpolation",
           );
         }
@@ -267,6 +347,31 @@ class Parser {
   }
 
   // Utility methods
+
+  /// Parses a list of arguments from the token stream.
+  List<ExpressionNode> parseArguments() {
+    advance(); // Consume the left parenthesis
+
+    List<ExpressionNode> arguments = [];
+
+    while (!match(TokenType.RIGHT_PAREN)) {
+      arguments.add(parseExpression());
+
+      if (match(TokenType.COMMA)) {
+        advance(); // Consume the comma
+      } else {
+        break;
+      }
+    }
+
+    if (!match(TokenType.RIGHT_PAREN)) {
+      throw UnimplementedError("Expected closing parenthesis: ${peek()}");
+    }
+
+    advance(); // Consume the right parenthesis
+
+    return arguments;
+  }
 
   /// Consumes the next token in the stream and returns it.
   Token advance() => tokens[current++];

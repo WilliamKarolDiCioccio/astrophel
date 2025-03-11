@@ -16,7 +16,6 @@ enum TokenType {
   DOLLAR,
   AT,
   QUESTION,
-  MODULUS,
   // One or two character tokens.
   PLUS,
   PLUS_EQUAL,
@@ -28,6 +27,8 @@ enum TokenType {
   STAR_EQUAL,
   SLASH,
   SLASH_EQUAL,
+  MODULUS,
+  MODULUS_EQUAL,
   BANG,
   BANG_EQUAL,
   EQUAL,

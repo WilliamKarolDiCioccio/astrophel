@@ -2,7 +2,7 @@ import 'ast_definitions.dart';
 import 'token_definitions.dart';
 
 /// Represents a module (the top-level AST node).
-interface class ModuleNode extends StatementNode {
+class ModuleNode extends StatementNode {
   static const ASTType type = ASTType.module;
   final List<StatementNode> statements = <StatementNode>[];
 
@@ -18,7 +18,7 @@ interface class ModuleNode extends StatementNode {
 }
 
 /// Represents an import statement.
-interface class ImportStatementNode extends StatementNode {
+class ImportStatementNode extends StatementNode {
   static const ASTType type = ASTType.importStatement;
   final Token importKeyword;
   final StringLiteralNode path;
@@ -42,7 +42,7 @@ interface class ImportStatementNode extends StatementNode {
 }
 
 /// Represents an export statement.
-interface class ExportStatementNode extends StatementNode {
+class ExportStatementNode extends StatementNode {
   static const ASTType type = ASTType.exportStatement;
   final Token exportKeyword;
   final StringLiteralNode path;
@@ -60,7 +60,7 @@ interface class ExportStatementNode extends StatementNode {
 }
 
 /// Represents a variable declaration.
-interface class VariableDeclarationNode extends StatementNode {
+class VariableDeclarationNode extends StatementNode {
   static const ASTType type = ASTType.variableDeclaration;
   final Token keyword; // e.g., "var", "let", or a type keyword
   final IdentifierNode name;
@@ -87,11 +87,11 @@ interface class VariableDeclarationNode extends StatementNode {
 }
 
 /// Represents a function declaration.
-interface class FunctionDeclarationNode extends StatementNode {
+class FunctionDeclarationNode extends StatementNode {
   static const ASTType type = ASTType.functionDeclaration;
   final Token functionKeyword;
   final IdentifierNode name;
-  final List<ParameterNode> parameters;
+  final List<FunctionParameterNode> parameters;
   final BlockNode body;
 
   FunctionDeclarationNode({
@@ -114,12 +114,12 @@ interface class FunctionDeclarationNode extends StatementNode {
 }
 
 /// Represents a function parameter.
-interface class ParameterNode extends StatementNode {
-  static const ASTType type = ASTType.parameter;
+class FunctionParameterNode extends StatementNode {
+  static const ASTType type = ASTType.functionParameter;
   final IdentifierNode name;
   final Token? typeAnnotation;
 
-  ParameterNode({required this.name, this.typeAnnotation});
+  FunctionParameterNode({required this.name, this.typeAnnotation});
 
   @override
   Map<String, dynamic> toJson() {
@@ -132,7 +132,7 @@ interface class ParameterNode extends StatementNode {
 }
 
 /// Represents an if statement (with an optional else branch).
-interface class IfStatementNode extends StatementNode {
+class IfStatementNode extends StatementNode {
   static const ASTType type = ASTType.ifStatement;
   final ExpressionNode condition;
   final StatementNode thenBranch;
@@ -159,7 +159,7 @@ interface class IfStatementNode extends StatementNode {
 }
 
 /// Represents an else statement (if you want to represent it separately).
-interface class ElseStatementNode extends StatementNode {
+class ElseStatementNode extends StatementNode {
   static const ASTType type = ASTType.elseStatement;
   final StatementNode branch;
 
@@ -172,7 +172,7 @@ interface class ElseStatementNode extends StatementNode {
 }
 
 /// Represents a switch statement.
-interface class SwitchStatementNode extends StatementNode {
+class SwitchStatementNode extends StatementNode {
   static const ASTType type = ASTType.switchStatement;
   final ExpressionNode expression;
   final List<SwitchCaseNode> cases;
@@ -190,7 +190,7 @@ interface class SwitchStatementNode extends StatementNode {
 }
 
 /// Represents a case (or default) within a switch statement.
-interface class SwitchCaseNode extends StatementNode {
+class SwitchCaseNode extends StatementNode {
   final ExpressionNode? caseExpression; // null indicates the default case
   final List<StatementNode> statements;
 
@@ -211,7 +211,7 @@ interface class SwitchCaseNode extends StatementNode {
 }
 
 /// Represents a while loop.
-interface class WhileStatementNode extends StatementNode {
+class WhileStatementNode extends StatementNode {
   static const ASTType type = ASTType.whileStatement;
   final ExpressionNode condition;
   final StatementNode body;
@@ -229,7 +229,7 @@ interface class WhileStatementNode extends StatementNode {
 }
 
 /// Represents a for loop.
-interface class ForStatementNode extends StatementNode {
+class ForStatementNode extends StatementNode {
   static const ASTType type = ASTType.forStatement;
   final StatementNode? initializer; // e.g., variable declaration or expression
   final ExpressionNode? condition;
@@ -260,7 +260,7 @@ interface class ForStatementNode extends StatementNode {
 }
 
 /// Represents a return statement.
-interface class ReturnStatementNode extends StatementNode {
+class ReturnStatementNode extends StatementNode {
   static const ASTType type = ASTType.returnStatement;
   final Token returnKeyword;
   final ExpressionNode? value;
@@ -281,7 +281,7 @@ interface class ReturnStatementNode extends StatementNode {
 }
 
 /// Represents a block of statements.
-interface class BlockNode extends StatementNode {
+class BlockNode extends StatementNode {
   static const ASTType type = ASTType.block;
   final List<StatementNode> statements;
 
@@ -297,7 +297,7 @@ interface class BlockNode extends StatementNode {
 }
 
 /// Represents an expression used as a statement.
-interface class ExpressionStatementNode extends StatementNode {
+class ExpressionStatementNode extends StatementNode {
   static const ASTType type = ASTType.expressionStatement;
   final ExpressionNode expression;
 
