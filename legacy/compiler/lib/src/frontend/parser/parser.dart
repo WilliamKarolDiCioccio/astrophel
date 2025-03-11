@@ -1,6 +1,9 @@
+import 'package:meta/meta.dart';
+
 import '../../shared/ast_definitions.dart';
 import '../../shared/token_definitions.dart';
 
+/// The parser class is responsible for converting a list of tokens into an AST. It runs on a per-file basis.
 class Parser {
   final List<Token> tokens;
   int current = 0;
@@ -12,7 +15,7 @@ class Parser {
     final ModuleNode module = ModuleNode();
 
     // Consumes tokens until the end of file token.
-    while (!isAtEnd()) {
+    while (!_isAtEnd()) {
       module.statements.add(parseStatement());
     }
 
@@ -20,34 +23,40 @@ class Parser {
   }
 
   /// Parses a statement from the token stream.
+  @visibleForTesting
   StatementNode parseStatement() {
     return parseExpression();
   }
 
   /// Parses an expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseExpression() {
     return parseLamdaExpression();
   }
 
   /// Parses a closure expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseLamdaExpression() {
+    /// TODO: To implement this we're awaiting parameter declarations support.
+
     return parseTernaryExpression();
   }
 
   /// Parses a ternary expression from the token stream (inlined if-else).
+  @visibleForTesting
   ExpressionNode parseTernaryExpression() {
     ExpressionNode condition = parseAssignmentExpression();
 
-    if (match(TokenType.QUESTION)) {
-      advance(); // Consume the QUESTION token
+    if (_match(TokenType.QUESTION)) {
+      _advance(); // Consume the QUESTION token
 
       ExpressionNode thenBranch = parseTernaryExpression();
 
-      if (!match(TokenType.COLON)) {
+      if (!_match(TokenType.COLON)) {
         throw UnimplementedError("Expected colon token for ternary expression");
       }
 
-      advance(); // Consume the COLON token
+      _advance(); // Consume the COLON token
 
       ExpressionNode elseBranch = parseTernaryExpression();
 
@@ -62,16 +71,17 @@ class Parser {
   }
 
   /// Parses an assignment expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseAssignmentExpression() {
     ExpressionNode expression = parseLogicalExpression();
 
-    if (match(TokenType.EQUAL) ||
-        match(TokenType.PLUS_EQUAL) ||
-        match(TokenType.MINUS_EQUAL) ||
-        match(TokenType.STAR_EQUAL) ||
-        match(TokenType.SLASH_EQUAL) ||
-        match(TokenType.MODULUS_EQUAL)) {
-      final operator = advance();
+    if (_match(TokenType.EQUAL) ||
+        _match(TokenType.PLUS_EQUAL) ||
+        _match(TokenType.MINUS_EQUAL) ||
+        _match(TokenType.STAR_EQUAL) ||
+        _match(TokenType.SLASH_EQUAL) ||
+        _match(TokenType.MODULUS_EQUAL)) {
+      final operator = _advance();
 
       final ExpressionNode value = parseAssignmentExpression();
 
@@ -92,12 +102,13 @@ class Parser {
   }
 
   /// Parses a logical expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseLogicalExpression() {
     var left = parseEqualityExpression();
 
-    while (peek().type == TokenType.AMPERSAND_AMPERSAND ||
-        peek().type == TokenType.PIPE_PIPE) {
-      final operator = advance();
+    while (_peek().type == TokenType.AMPERSAND_AMPERSAND ||
+        _peek().type == TokenType.PIPE_PIPE) {
+      final operator = _advance();
       final right = parseEqualityExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
@@ -106,12 +117,13 @@ class Parser {
   }
 
   /// Parses an equality expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseEqualityExpression() {
     var left = parseRelationalExpression();
 
-    while (peek().type == TokenType.BANG_EQUAL ||
-        peek().type == TokenType.EQUAL_EQUAL) {
-      final operator = advance();
+    while (_peek().type == TokenType.BANG_EQUAL ||
+        _peek().type == TokenType.EQUAL_EQUAL) {
+      final operator = _advance();
       final right = parseRelationalExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
@@ -120,14 +132,15 @@ class Parser {
   }
 
   /// Pareses a relational expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseRelationalExpression() {
     var left = parseAdditiveExpression();
 
-    while (peek().type == TokenType.GREATER ||
-        peek().type == TokenType.GREATER_EQUAL ||
-        peek().type == TokenType.LESS ||
-        peek().type == TokenType.LESS_EQUAL) {
-      final operator = advance();
+    while (_peek().type == TokenType.GREATER ||
+        _peek().type == TokenType.GREATER_EQUAL ||
+        _peek().type == TokenType.LESS ||
+        _peek().type == TokenType.LESS_EQUAL) {
+      final operator = _advance();
       final right = parseAdditiveExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
@@ -138,11 +151,12 @@ class Parser {
   // Secondary expressions - Arithmetic
 
   /// Parses an arithmetic expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseAdditiveExpression() {
     var left = parseMultiplicativeExpression();
 
-    while (peek().type == TokenType.PLUS || peek().type == TokenType.MINUS) {
-      final operator = advance();
+    while (_peek().type == TokenType.PLUS || _peek().type == TokenType.MINUS) {
+      final operator = _advance();
       final right = parseMultiplicativeExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
@@ -151,13 +165,14 @@ class Parser {
   }
 
   /// Parses a multiplicative expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseMultiplicativeExpression() {
     var left = parsePrefixExpression();
 
-    while (peek().type == TokenType.STAR ||
-        peek().type == TokenType.SLASH ||
-        peek().type == TokenType.MODULUS) {
-      final operator = advance();
+    while (_peek().type == TokenType.STAR ||
+        _peek().type == TokenType.SLASH ||
+        _peek().type == TokenType.MODULUS) {
+      final operator = _advance();
       final right = parsePrefixExpression();
       left = BinaryExpressionNode(left: left, right: right, operator: operator);
     }
@@ -168,12 +183,13 @@ class Parser {
   // Primary expressions
 
   /// Parses a unary expression from the token stream.
+  @visibleForTesting
   ExpressionNode parsePrefixExpression() {
-    if (peek().type == TokenType.MINUS ||
-        peek().type == TokenType.BANG ||
-        peek().type == TokenType.INCREMENT ||
-        peek().type == TokenType.DECREMENT) {
-      final operator = advance();
+    if (_peek().type == TokenType.MINUS ||
+        _peek().type == TokenType.BANG ||
+        _peek().type == TokenType.INCREMENT ||
+        _peek().type == TokenType.DECREMENT) {
+      final operator = _advance();
       final right = parsePostfixExpression();
       return UnaryExpressionNode(operand: right, operator: operator);
     }
@@ -182,47 +198,48 @@ class Parser {
   }
 
   /// Parses a postfix expression from the token stream.
+  @visibleForTesting
   ExpressionNode parsePostfixExpression() {
     ExpressionNode expression = parsePrimaryExpression();
 
     while (true) {
-      if (match(TokenType.DOT)) {
-        advance(); // Consume the dot token
+      if (_match(TokenType.DOT)) {
+        _advance(); // Consume the dot token
 
-        if (!match(TokenType.IDENTIFIER)) {
+        if (!_match(TokenType.IDENTIFIER)) {
           throw UnimplementedError("Expected identifier after dot token");
         }
 
         expression = IdentifierAccessExpressionNode(
           object: expression,
           dot: tokens[current - 1],
-          name: advance(),
+          name: _advance(),
         );
-      } else if (match(TokenType.INCREMENT) || match(TokenType.DECREMENT)) {
-        final operator = advance();
+      } else if (_match(TokenType.INCREMENT) || _match(TokenType.DECREMENT)) {
+        final operator = _advance();
         expression = UnaryExpressionNode(
           operand: expression,
           operator: operator,
         );
-      } else if (match(TokenType.LEFT_PAREN)) {
+      } else if (_match(TokenType.LEFT_PAREN)) {
         final arguments = parseArguments();
         expression = CallExpressionNode(
           callee: expression,
           paren: tokens[current - 1],
           arguments: arguments,
         );
-      } else if (match(TokenType.LEFT_BRACKET)) {
-        advance(); // Consume the opening bracket
+      } else if (_match(TokenType.LEFT_BRACKET)) {
+        _advance(); // Consume the opening bracket
 
         final index = parseExpression();
 
-        if (!match(TokenType.RIGHT_BRACKET)) {
+        if (!_match(TokenType.RIGHT_BRACKET)) {
           throw UnimplementedError(
             "Expected closing bracket for index expression",
           );
         }
 
-        advance(); // Consume the closing bracket
+        _advance(); // Consume the closing bracket
 
         expression = IndexAccessExpressionNode(
           object: expression,
@@ -240,65 +257,67 @@ class Parser {
   /// Parses an index expression from the token stream.
 
   /// Parses a grouping expression from the token stream.
+  @visibleForTesting
   ExpressionNode parseGroupingExpression() {
-    advance(); // Consume the left parenthesis
+    _advance(); // Consume the left parenthesis
 
     final expression = parseExpression();
 
-    if (!match(TokenType.RIGHT_PAREN)) {
+    if (!_match(TokenType.RIGHT_PAREN)) {
       throw UnimplementedError("Expected closing parenthesis");
     }
 
-    advance(); // Consume the closing parenthesis
+    _advance(); // Consume the closing parenthesis
 
     return GroupingExpressionNode(expression: expression);
   }
 
   /// Parses a string or string interpolation from the token stream.
+  @visibleForTesting
   ExpressionNode parseStringOrInterpolation() {
     List<ExpressionNode> fragments = [];
 
-    if (!match(TokenType.STRING_FRAGMENT_START)) {
+    if (!_match(TokenType.STRING_FRAGMENT_START)) {
       throw UnimplementedError(
-        "Expected string fragment start token: ${peek()}",
+        "Expected string fragment start token: ${_peek()}",
       );
     }
 
-    fragments.add(StringFragmentNode(value: peek()));
+    fragments.add(StringFragmentNode(value: _peek()));
 
-    advance(); // Consume the STRING_FRAGMENT_START token
+    _advance(); // Consume the STRING_FRAGMENT_START token
 
-    while (peek().type == TokenType.STRING_FRAGMENT ||
-        peek().type == TokenType.STRING_FRAGMENT_END ||
-        peek().type == TokenType.IDENTIFIER_INTERPOLATION ||
-        peek().type == TokenType.EXPRESSION_INTERPOLATION_START) {
-      final token = peek();
+    while (_peek().type == TokenType.STRING_FRAGMENT ||
+        _peek().type == TokenType.STRING_FRAGMENT_END ||
+        _peek().type == TokenType.IDENTIFIER_INTERPOLATION ||
+        _peek().type == TokenType.EXPRESSION_INTERPOLATION_START) {
+      final token = _peek();
 
       if (token.type == TokenType.STRING_FRAGMENT ||
           token.type == TokenType.STRING_FRAGMENT_END) {
-        fragments.add(StringFragmentNode(value: advance()));
+        fragments.add(StringFragmentNode(value: _advance()));
       } else if (token.type == TokenType.IDENTIFIER_INTERPOLATION) {
-        advance(); // Consume the IDENTIFIER_INTERPOLATION token
+        _advance(); // Consume the IDENTIFIER_INTERPOLATION token
 
-        if (!match(TokenType.IDENTIFIER)) {
+        if (!_match(TokenType.IDENTIFIER)) {
           throw UnimplementedError("Expected identifier interpolation token");
         }
 
-        fragments.add(IdentifierNode(name: peek()));
+        fragments.add(IdentifierNode(name: _peek()));
 
-        advance(); // Consume the IDENTIFIER token
+        _advance(); // Consume the IDENTIFIER token
       } else if (token.type == TokenType.EXPRESSION_INTERPOLATION_START) {
-        advance(); // Consume the EXPRESSION_INTERPOLATION_START token
+        _advance(); // Consume the EXPRESSION_INTERPOLATION_START token
 
         ExpressionNode interpolatedExpr = parseExpression();
 
-        if (!match(TokenType.EXPRESSION_INTERPOLATION_END)) {
+        if (!_match(TokenType.EXPRESSION_INTERPOLATION_END)) {
           throw UnimplementedError(
             "Expected end token for expression interpolation",
           );
         }
 
-        advance(); // Consume the EXPRESSION_INTERPOLATION_END token
+        _advance(); // Consume the EXPRESSION_INTERPOLATION_END token
 
         fragments.add(interpolatedExpr);
       } else {
@@ -320,26 +339,27 @@ class Parser {
   }
 
   /// Parses a primary expression from the token stream.
+  @visibleForTesting
   ExpressionNode parsePrimaryExpression() {
-    var tk = peek();
+    var tk = _peek();
 
     late ExpressionNode expression;
 
     switch (tk.type) {
       case TokenType.NUMBER:
         expression = NumericLiteralNode(value: tk);
-        advance();
+        _advance();
         break;
       case TokenType.STRING_LITERAL:
         expression = StringLiteralNode(value: tk);
-        advance();
+        _advance();
         break;
       case TokenType.STRING_FRAGMENT_START:
         expression = parseStringOrInterpolation();
         break;
       case TokenType.IDENTIFIER:
         expression = IdentifierNode(name: tk);
-        advance();
+        _advance();
         break;
       case TokenType.LEFT_PAREN:
         expression = parseGroupingExpression();
@@ -354,46 +374,40 @@ class Parser {
   // Utility methods
 
   /// Parses a list of arguments from the token stream.
+  @visibleForTesting
   List<ExpressionNode> parseArguments() {
-    advance(); // Consume the left parenthesis
+    _advance(); // Consume the left parenthesis
 
     List<ExpressionNode> arguments = [];
 
-    while (!match(TokenType.RIGHT_PAREN)) {
+    while (!_match(TokenType.RIGHT_PAREN)) {
       arguments.add(parseExpression());
 
-      if (match(TokenType.COMMA)) {
-        advance(); // Consume the comma
+      if (_match(TokenType.COMMA)) {
+        _advance(); // Consume the comma
       } else {
         break;
       }
     }
 
-    if (!match(TokenType.RIGHT_PAREN)) {
-      throw UnimplementedError("Expected closing parenthesis: ${peek()}");
+    if (!_match(TokenType.RIGHT_PAREN)) {
+      throw UnimplementedError("Expected closing parenthesis: ${_peek()}");
     }
 
-    advance(); // Consume the right parenthesis
+    _advance(); // Consume the right parenthesis
 
     return arguments;
   }
 
   /// Consumes the next token in the stream and returns it.
-  Token advance() => tokens[current++];
+  Token _advance() => tokens[current++];
 
   /// Returns the current token in the stream without consuming it.
-  Token peek() => tokens[current];
-
-  /// Returns the next token in the stream without consuming it.
-  Token? peekNext() => isAtEnd() ? tokens[current + 1] : null;
+  Token _peek() => tokens[current];
 
   /// Checks if the current token matches the expected token type.
-  bool match(TokenType expected) => tokens[current].type == expected;
-
-  /// Checks if the next token matches the expected token type.
-  bool matchNext(TokenType expected) =>
-      !isAtEnd() && tokens[current + 1].type == expected;
+  bool _match(TokenType expected) => tokens[current].type == expected;
 
   /// Checks if we have reached the end of the token stream.
-  bool isAtEnd() => current + 1 >= tokens.length;
+  bool _isAtEnd() => current + 1 >= tokens.length;
 }

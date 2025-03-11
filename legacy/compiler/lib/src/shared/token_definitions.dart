@@ -80,14 +80,16 @@ class Token {
   final String lexeme;
   final dynamic literal;
   final int line;
+  final int column;
 
-  Token(this.type, this.lexeme, this.literal, this.line);
+  Token(this.type, this.lexeme, this.literal, this.line, this.column);
 
   Map<String, dynamic> toJson() => {
     'type': type.toString(),
     'lexeme': lexeme,
     'literal': literal,
     'line': line,
+    'column': column,
   };
 
   @override
