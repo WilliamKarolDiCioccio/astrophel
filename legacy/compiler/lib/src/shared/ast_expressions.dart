@@ -29,6 +29,9 @@ class ClosureExpressionNode extends ExpressionNode {
       'body': body.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [captures, parameters, body];
 }
 
 /// Represents a ternary expression (commonly known as the inline conditional operator).
@@ -58,6 +61,9 @@ class TernaryExpressionNode extends ExpressionNode {
       'elseBranch': elseBranch.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [condition, thenBranch, elseBranch];
 }
 
 /// Represents an assignment expression.
@@ -87,6 +93,9 @@ class AssignmentExpressionNode extends ExpressionNode {
       'value': value.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [target, value, operator];
 }
 
 /// Represents a binary expression.
@@ -116,6 +125,9 @@ class BinaryExpressionNode extends ExpressionNode {
       'operator': operator.lexeme,
     };
   }
+
+  @override
+  List<Object?> get props => [left, right, operator];
 }
 
 /// Represents a unary expression (postfix or prefix).
@@ -140,6 +152,9 @@ class UnaryExpressionNode extends ExpressionNode {
       'operator': operator.lexeme,
     };
   }
+
+  @override
+  List<Object?> get props => [operand, operator];
 }
 
 /// Represents an identifier access expression.
@@ -168,6 +183,9 @@ class IdentifierAccessExpressionNode extends ExpressionNode {
       'name': name.lexeme,
     };
   }
+
+  @override
+  List<Object?> get props => [object, dot, name];
 }
 
 /// Represents an index access expression.
@@ -196,6 +214,9 @@ class IndexAccessExpressionNode extends ExpressionNode {
       'index': index.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [object, bracket, index];
 }
 
 /// Represents a function call.
@@ -227,6 +248,9 @@ class CallExpressionNode extends ExpressionNode {
       'arguments': arguments.map((arg) => arg.toJson()).toList(),
     };
   }
+
+  @override
+  List<Object?> get props => [callee, paren, arguments];
 }
 
 /// Represents a numeric literal.
@@ -243,6 +267,9 @@ class NumericLiteralNode extends ExpressionNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'value': value.lexeme};
   }
+
+  @override
+  List<Object?> get props => [value];
 }
 
 /// Represents a string literal.
@@ -259,6 +286,9 @@ class StringLiteralNode extends ExpressionNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'value': value.lexeme};
   }
+
+  @override
+  List<Object?> get props => [value];
 }
 
 /// Represents a string interpolation expression.
@@ -277,6 +307,9 @@ class StringFragmentNode extends ExpressionNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'value': value.lexeme};
   }
+
+  @override
+  List<Object?> get props => [value];
 }
 
 /// Represents an identifier.
@@ -293,6 +326,9 @@ class IdentifierNode extends ExpressionNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'name': name.lexeme};
   }
+
+  @override
+  List<Object?> get props => [name];
 }
 
 /// Represents a grouping expression to manipulate precedence.
@@ -309,6 +345,9 @@ class GroupingExpressionNode extends ExpressionNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'expression': expression.toJson()};
   }
+
+  @override
+  List<Object?> get props => [expression];
 }
 
 /// Represents a string interpolation expression.
@@ -330,4 +369,7 @@ class StringInterpolationNode extends ExpressionNode {
       'fragments': fragments.map((fragment) => fragment.toJson()).toList(),
     };
   }
+
+  @override
+  List<Object?> get props => [fragments];
 }

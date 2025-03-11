@@ -15,6 +15,9 @@ class ModuleNode extends StatementNode {
       'statements': statements.map((stmt) => stmt.toJson()).toList(),
     };
   }
+
+  @override
+  List<Object?> get props => [statements];
 }
 
 /// Represents an import statement.
@@ -22,7 +25,7 @@ class ImportStatementNode extends StatementNode {
   static const ASTType type = ASTType.importStatement;
   final Token importKeyword;
   final StringLiteralNode path;
-  final Token? alias; // Optional alias (e.g., import "foo" as bar)
+  final Token? alias;
 
   ImportStatementNode({
     required this.importKeyword,
@@ -39,6 +42,9 @@ class ImportStatementNode extends StatementNode {
       if (alias != null) 'alias': alias!.lexeme,
     };
   }
+
+  @override
+  List<Object?> get props => [importKeyword, path, alias];
 }
 
 /// Represents an export statement.
@@ -57,6 +63,9 @@ class ExportStatementNode extends StatementNode {
       'path': path.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [exportKeyword, path];
 }
 
 /// Represents a variable declaration.
@@ -84,6 +93,9 @@ class VariableDeclarationNode extends StatementNode {
     }
     return json;
   }
+
+  @override
+  List<Object?> get props => [keyword, name, initializer];
 }
 
 /// Represents a function declaration.
@@ -111,6 +123,9 @@ class FunctionDeclarationNode extends StatementNode {
       'body': body.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [functionKeyword, name, parameters, body];
 }
 
 /// Represents a function parameter.
@@ -129,6 +144,9 @@ class FunctionParameterNode extends StatementNode {
     }
     return json;
   }
+
+  @override
+  List<Object?> get props => [name, typeAnnotation];
 }
 
 /// Represents an if statement (with an optional else branch).
@@ -156,6 +174,9 @@ class IfStatementNode extends StatementNode {
     }
     return json;
   }
+
+  @override
+  List<Object?> get props => [condition, thenBranch, elseBranch];
 }
 
 /// Represents an else statement (if you want to represent it separately).
@@ -169,6 +190,9 @@ class ElseStatementNode extends StatementNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'branch': branch.toJson()};
   }
+
+  @override
+  List<Object?> get props => [branch];
 }
 
 /// Represents a switch statement.
@@ -187,6 +211,9 @@ class SwitchStatementNode extends StatementNode {
       'cases': cases.map((c) => c.toJson()).toList(),
     };
   }
+
+  @override
+  List<Object?> get props => [expression, cases];
 }
 
 /// Represents a case (or default) within a switch statement.
@@ -208,6 +235,9 @@ class SwitchCaseNode extends StatementNode {
     }
     return json;
   }
+
+  @override
+  List<Object?> get props => [caseExpression, statements];
 }
 
 /// Represents a while loop.
@@ -226,6 +256,9 @@ class WhileStatementNode extends StatementNode {
       'body': body.toJson(),
     };
   }
+
+  @override
+  List<Object?> get props => [condition, body];
 }
 
 /// Represents a for loop.
@@ -257,6 +290,9 @@ class ForStatementNode extends StatementNode {
     }
     return json;
   }
+
+  @override
+  List<Object?> get props => [initializer, condition, increment, body];
 }
 
 /// Represents a return statement.
@@ -278,6 +314,9 @@ class ReturnStatementNode extends StatementNode {
     }
     return json;
   }
+
+  @override
+  List<Object?> get props => [returnKeyword, value];
 }
 
 /// Represents a block of statements.
@@ -294,6 +333,9 @@ class BlockNode extends StatementNode {
       'statements': statements.map((stmt) => stmt.toJson()).toList(),
     };
   }
+
+  @override
+  List<Object?> get props => [statements];
 }
 
 /// Represents an expression used as a statement.
@@ -307,4 +349,7 @@ class ExpressionStatementNode extends StatementNode {
   Map<String, dynamic> toJson() {
     return {'type': type.toString(), 'expression': expression.toJson()};
   }
+
+  @override
+  List<Object?> get props => [expression];
 }

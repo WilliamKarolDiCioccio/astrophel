@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:equatable/equatable.dart';
+
 export 'ast_expressions.dart';
 export 'ast_statements.dart';
 
@@ -55,7 +57,7 @@ enum ASTType {
 /// This class is used to represent a statement in the AST. A statement is a
 /// single instruction that performs an action. For example, a variable
 /// declaration, a function declaration, or an if statement.
-abstract class StatementNode {
+abstract class StatementNode extends Equatable {
   Map<String, dynamic> toJson();
 
   @override
