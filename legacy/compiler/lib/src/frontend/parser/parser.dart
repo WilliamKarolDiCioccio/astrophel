@@ -306,9 +306,14 @@ class Parser {
       }
     }
 
-    if (fragments.isEmpty ||
-        fragments.length == 1 && fragments.first is StringFragmentNode) {
+    if (fragments.length == 1 && fragments.first is StringFragmentNode) {
       throw UnimplementedError("Unexpected token: $fragments.first");
+    }
+
+    if (fragments.last is! StringFragmentNode ||
+        (fragments.last as StringFragmentNode).value.type !=
+            TokenType.STRING_FRAGMENT_END) {
+      throw UnimplementedError("Expected end token for string interpolation");
     }
 
     return StringInterpolationNode(fragments: fragments);
