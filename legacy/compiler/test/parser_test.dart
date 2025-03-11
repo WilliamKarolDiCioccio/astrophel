@@ -7,12 +7,12 @@ void main() {
     group('parseTernaryExpression', () {
       test('parseTernaryExpression with valid ternary expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.QUESTION, '?', null, 0),
-          Token(TokenType.NUMBER, '1', 1, 0),
-          Token(TokenType.COLON, ':', null, 0),
-          Token(TokenType.NUMBER, '2', 2, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.QUESTION, '?', null, 0, 0),
+          Token(TokenType.NUMBER, '1', 1, 0, 0),
+          Token(TokenType.COLON, ':', null, 0, 0),
+          Token(TokenType.NUMBER, '2', 2, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -27,10 +27,10 @@ void main() {
 
       test('parseTernaryExpression with missing colon', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.QUESTION, '?', null, 0),
-          Token(TokenType.NUMBER, '1', 1, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.QUESTION, '?', null, 0, 0),
+          Token(TokenType.NUMBER, '1', 1, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -40,8 +40,8 @@ void main() {
 
       test('parseTernaryExpression without ternary operator', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -54,10 +54,10 @@ void main() {
     group('parseAssignmentExpression', () {
       test('parseAssignmentExpression with valid assignment', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EQUAL, '=', null, 0),
-          Token(TokenType.NUMBER, '1', 1, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EQUAL, '=', null, 0, 0),
+          Token(TokenType.NUMBER, '1', 1, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -72,10 +72,10 @@ void main() {
 
       test('parseAssignmentExpression with invalid assignment target', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', 1, 0),
-          Token(TokenType.EQUAL, '=', null, 0),
-          Token(TokenType.NUMBER, '2', 2, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', 1, 0, 0),
+          Token(TokenType.EQUAL, '=', null, 0, 0),
+          Token(TokenType.NUMBER, '2', 2, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -88,8 +88,8 @@ void main() {
 
       test('parseAssignmentExpression without assignment operator', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -102,10 +102,10 @@ void main() {
     group('parseLogicalExpression', () {
       test('parseLogicalExpression with valid logical AND expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.AMPERSAND_AMPERSAND, '&&', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.AMPERSAND_AMPERSAND, '&&', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -120,10 +120,10 @@ void main() {
 
       test('parseLogicalExpression with valid logical OR expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.PIPE_PIPE, '||', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.PIPE_PIPE, '||', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -138,8 +138,8 @@ void main() {
 
       test('parseLogicalExpression without logical operator', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -150,12 +150,12 @@ void main() {
 
       test('parseLogicalExpression with multiple logical operators', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.AMPERSAND_AMPERSAND, '&&', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.PIPE_PIPE, '||', null, 0),
-          Token(TokenType.IDENTIFIER, 'c', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.AMPERSAND_AMPERSAND, '&&', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.PIPE_PIPE, '||', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'c', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -177,10 +177,10 @@ void main() {
     group('parseEqualityExpression', () {
       test('parseEqualityExpression with valid equality expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EQUAL_EQUAL, '==', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EQUAL_EQUAL, '==', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -195,10 +195,10 @@ void main() {
 
       test('parseEqualityExpression with valid inequality expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.BANG_EQUAL, '!=', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.BANG_EQUAL, '!=', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -213,8 +213,8 @@ void main() {
 
       test('parseEqualityExpression without equality operator', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -227,10 +227,10 @@ void main() {
     group('parseRelationalExpression', () {
       test('parseRelationalExpression with valid greater than expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.GREATER, '>', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.GREATER, '>', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -245,10 +245,10 @@ void main() {
 
       test('parseRelationalExpression with valid less than expression', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.LESS, '<', null, 0),
-          Token(TokenType.IDENTIFIER, 'b', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.LESS, '<', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'b', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -263,8 +263,8 @@ void main() {
 
       test('parseRelationalExpression without relational operator', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -277,10 +277,10 @@ void main() {
     group('parseAdditiveExpression', () {
       test('parseAdditiveExpression with valid addition expression', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.PLUS, '+', null, 0),
-          Token(TokenType.NUMBER, '2', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.PLUS, '+', null, 0, 0),
+          Token(TokenType.NUMBER, '2', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -295,10 +295,10 @@ void main() {
 
       test('parseAdditiveExpression with valid subtraction expression', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.MINUS, '-', null, 0),
-          Token(TokenType.NUMBER, '2', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.MINUS, '-', null, 0, 0),
+          Token(TokenType.NUMBER, '2', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -313,8 +313,8 @@ void main() {
 
       test('parseAdditiveExpression without additive operator', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -329,10 +329,10 @@ void main() {
         'parseMultiplicativeExpression with valid multiplication expression',
         () {
           final tokens = [
-            Token(TokenType.NUMBER, '1', null, 0),
-            Token(TokenType.STAR, '*', null, 0),
-            Token(TokenType.NUMBER, '2', null, 0),
-            Token(TokenType.EOF, '0', null, 1),
+            Token(TokenType.NUMBER, '1', null, 0, 0),
+            Token(TokenType.STAR, '*', null, 0, 0),
+            Token(TokenType.NUMBER, '2', null, 0, 0),
+            Token(TokenType.EOF, '0', null, 0, 0),
           ];
 
           final parser = Parser(tokens);
@@ -348,10 +348,10 @@ void main() {
 
       test('parseMultiplicativeExpression with valid division expression', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.SLASH, '/', null, 0),
-          Token(TokenType.NUMBER, '2', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.SLASH, '/', null, 0, 0),
+          Token(TokenType.NUMBER, '2', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -366,10 +366,10 @@ void main() {
 
       test('parseMultiplicativeExpression with valid modulus expression', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.MODULUS, '%', null, 0),
-          Token(TokenType.NUMBER, '2', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.MODULUS, '%', null, 0, 0),
+          Token(TokenType.NUMBER, '2', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -384,8 +384,8 @@ void main() {
 
       test('parseMultiplicativeExpression without multiplicative operator', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -398,9 +398,9 @@ void main() {
     group('parsePrefixExpression', () {
       test('parsePrefixExpression with valid prefix minus', () {
         final tokens = [
-          Token(TokenType.MINUS, '-', null, 0),
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.MINUS, '-', null, 0, 0),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -414,9 +414,9 @@ void main() {
 
       test('parsePrefixExpression with valid prefix bang', () {
         final tokens = [
-          Token(TokenType.BANG, '!', null, 0),
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.BANG, '!', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -430,8 +430,8 @@ void main() {
 
       test('parsePrefixExpression without prefix operator', () {
         final tokens = [
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -444,9 +444,9 @@ void main() {
     group('parsePostfixExpression', () {
       test('parsePostfixExpression with valid postfix increment', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.INCREMENT, '++', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.INCREMENT, '++', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -460,9 +460,9 @@ void main() {
 
       test('parsePostfixExpression with valid postfix decrement', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.DECREMENT, '--', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.DECREMENT, '--', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -476,8 +476,8 @@ void main() {
 
       test('parsePostfixExpression without postfix operator', () {
         final tokens = [
-          Token(TokenType.IDENTIFIER, 'a', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -490,11 +490,11 @@ void main() {
     group('parseStringOrInterpolation', () {
       test('parseStringOrInterpolation with identifier interpolation', () {
         final tokens = [
-          Token(TokenType.STRING_FRAGMENT_START, '"Hello, ', null, 0),
-          Token(TokenType.IDENTIFIER_INTERPOLATION, '\$', null, 0),
-          Token(TokenType.IDENTIFIER, 'name', null, 0),
-          Token(TokenType.STRING_FRAGMENT_END, '"', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.STRING_FRAGMENT_START, '"Hello, ', null, 0, 0),
+          Token(TokenType.IDENTIFIER_INTERPOLATION, '\$', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'name', null, 0, 0),
+          Token(TokenType.STRING_FRAGMENT_END, '"', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -510,14 +510,14 @@ void main() {
 
       test('parseStringOrInterpolation with expression interpolation', () {
         final tokens = [
-          Token(TokenType.STRING_FRAGMENT_START, '"Result: ', null, 0),
-          Token(TokenType.EXPRESSION_INTERPOLATION_START, '\${', null, 0),
-          Token(TokenType.NUMBER, '1', null, 0),
-          Token(TokenType.PLUS, '+', null, 0),
-          Token(TokenType.NUMBER, '2', null, 0),
-          Token(TokenType.EXPRESSION_INTERPOLATION_END, '}', null, 0),
-          Token(TokenType.STRING_FRAGMENT_END, '"', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.STRING_FRAGMENT_START, '"Result: ', null, 0, 0),
+          Token(TokenType.EXPRESSION_INTERPOLATION_START, '\${', null, 0, 0),
+          Token(TokenType.NUMBER, '1', null, 0, 0),
+          Token(TokenType.PLUS, '+', null, 0, 0),
+          Token(TokenType.NUMBER, '2', null, 0, 0),
+          Token(TokenType.EXPRESSION_INTERPOLATION_END, '}', null, 0, 0),
+          Token(TokenType.STRING_FRAGMENT_END, '"', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
@@ -533,10 +533,10 @@ void main() {
 
       test('parseStringOrInterpolation with missing end token', () {
         final tokens = [
-          Token(TokenType.STRING_FRAGMENT_START, '"Hello, ', null, 0),
-          Token(TokenType.IDENTIFIER_INTERPOLATION, '\$', null, 0),
-          Token(TokenType.IDENTIFIER, 'name', null, 0),
-          Token(TokenType.EOF, '0', null, 1),
+          Token(TokenType.STRING_FRAGMENT_START, '"Hello, ', null, 0, 0),
+          Token(TokenType.IDENTIFIER_INTERPOLATION, '\$', null, 0, 0),
+          Token(TokenType.IDENTIFIER, 'name', null, 0, 0),
+          Token(TokenType.EOF, '0', null, 0, 0),
         ];
 
         final parser = Parser(tokens);
