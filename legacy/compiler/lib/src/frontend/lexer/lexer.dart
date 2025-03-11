@@ -18,6 +18,7 @@ class Lexer {
   final List<Token> tokens = [];
   int current = 0;
   int line = 1;
+  int column = 1;
 
   Lexer(this.source);
 
@@ -149,6 +150,7 @@ class Lexer {
       case '\n':
         _advance();
         line++;
+        column = 1;
         break;
       case '"':
         string();
@@ -192,7 +194,10 @@ class Lexer {
   void blockComment() {
     // Consume characters until we find '*/'
     while (!_isAtEnd() && !(_peek() == '*' && _peekNext() == '/')) {
-      if (_peek() == '\n') line++;
+      if (_peek() == '\n') {
+        line++;
+        column = 1;
+      }
       _advance();
     }
     if (_isAtEnd()) {
@@ -265,7 +270,10 @@ class Lexer {
       if (c == '"' && !_isEscaped()) break;
 
       // Track line numbers
-      if (c == '\n') line++;
+      if (c == '\n') {
+        line++;
+        column = 1;
+      }
 
       // String interpolation
       if (c == '\$' && !_isEscaped()) {
@@ -359,7 +367,10 @@ class Lexer {
   // Utility methods
 
   /// Consumes the next character in the source and returns it.
-  String _advance() => source[current++];
+  String _advance() {
+    column++;
+    return source[current++];
+  }
 
   /// Returns the current character in the source without consuming it.
   String _peek() => _isAtEnd() ? '\0' : source[current];
