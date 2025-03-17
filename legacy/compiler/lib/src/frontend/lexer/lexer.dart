@@ -76,17 +76,13 @@ class Lexer {
         _addToken(TokenType.SEMICOLON, lexeme: source[current]);
         _advance();
         break;
-      case ':':
-        _addToken(TokenType.COLON, lexeme: source[current]);
-        _advance();
-        break;
+
       case '?':
         _addToken(TokenType.QUESTION, lexeme: source[current]);
         _advance();
         break;
-      case '@':
-        _addToken(TokenType.AT, lexeme: source[current]);
-        _advance();
+      case ':':
+        scanDoubleToken({'=': TokenType.COLON_EQUAL}, TokenType.COLON);
         break;
       case '+':
         scanDoubleToken({
@@ -98,6 +94,7 @@ class Lexer {
         scanDoubleToken({
           '-': TokenType.DECREMENT,
           '=': TokenType.MINUS_EQUAL,
+          '>': TokenType.ARROW,
         }, TokenType.MINUS);
         break;
       case '*':
@@ -111,24 +108,47 @@ class Lexer {
         scanDoubleToken({'=': TokenType.BANG_EQUAL}, TokenType.BANG);
         break;
       case '=':
-        scanDoubleToken({'=': TokenType.EQUAL_EQUAL}, TokenType.EQUAL);
+        scanDoubleToken({
+          '>': TokenType.FAT_ARROW,
+          '=': TokenType.EQUAL_EQUAL,
+        }, TokenType.EQUAL);
         break;
       case '<':
-        scanDoubleToken({'=': TokenType.LESS_EQUAL}, TokenType.LESS);
+        scanDoubleToken({
+          '<': TokenType.LESS_LESS,
+          '=': TokenType.LESS_EQUAL,
+        }, TokenType.LESS);
         break;
       case '>':
-        scanDoubleToken({'=': TokenType.GREATER_EQUAL}, TokenType.GREATER);
+        scanDoubleToken({
+          '<': TokenType.GREATER_GREATER,
+          '=': TokenType.GREATER_EQUAL,
+        }, TokenType.GREATER);
         break;
       case '&':
         scanDoubleToken({
           '&': TokenType.AMPERSAND_AMPERSAND,
+          '=': TokenType.AMPERSAND_EQUAL,
         }, TokenType.AMPERSAND);
         break;
       case '|':
-        scanDoubleToken({'|': TokenType.PIPE_PIPE}, TokenType.PIPE);
+        scanDoubleToken({
+          '|': TokenType.PIPE_PIPE,
+          '=': TokenType.PIPE_EQUAL,
+        }, TokenType.PIPE);
         break;
       case '^':
-        scanDoubleToken({'^': TokenType.HAT_HAT}, TokenType.HAT);
+        scanDoubleToken({
+          '^': TokenType.CARET_CARET,
+          '=': TokenType.CARET_EQUAL,
+        }, TokenType.CARET);
+        break;
+      case '~':
+        _addToken(TokenType.TILDE, lexeme: source[current]);
+        _advance();
+        break;
+      case '@':
+        annotation();
         break;
       case '/':
         if (_matchNext('/')) {
@@ -210,10 +230,26 @@ class Lexer {
   }
 
   @visibleForTesting
+  void annotation() {
+    final start = current;
+
+    if (_peek() == '@') {
+      _advance(); // Consume the '@'
+    }
+
+    while ((_isAlphaNumeric(_peek())) && !_isAtEnd()) {
+      _advance();
+    }
+
+    final text = source.substring(start, current);
+    _addToken(TokenType.ANNOTATION, lexeme: text);
+  }
+
+  @visibleForTesting
   void identifier() {
     final start = current;
 
-    while (_isAlphaNumeric(_peek()) && !_isAtEnd()) {
+    while ((_isAlphaNumeric(_peek())) && !_isAtEnd()) {
       _advance();
     }
 
@@ -235,7 +271,7 @@ class Lexer {
     // Look for a fractional part
     if (_peek() == '.' && _isDigit(_peekNext())) {
       _advance(); // consume '.'
-      while (_isDigit(_peek())) {
+      while (_isDigit(_peek()) && !_isAtEnd()) {
         _advance();
       }
     }
@@ -429,9 +465,7 @@ class Lexer {
           case '\\':
             buffer.write('\\');
             break;
-          // Add more escape sequences as needed.\n
           default:
-            // If it's not a recognized escape, keep the character as is.
             buffer.write(next);
             break;
         }
@@ -459,32 +493,62 @@ class Lexer {
   }
 
   void _addToken(TokenType type, {required String lexeme, dynamic literal}) {
-    tokens.add(Token(type, lexeme, literal, line, current));
+    tokens.add(Token(type, lexeme, literal, line, column));
   }
 
   // Match the token type with the reserved keywords.
   static final Map<String, TokenType> keywords = {
+    // Module system
     'import': TokenType.IMPORT,
     'export': TokenType.EXPORT,
+    'as': TokenType.AS,
+    'from': TokenType.FROM,
+
+    // Control flow
     'if': TokenType.IF,
     'else': TokenType.ELSE,
     'switch': TokenType.SWITCH,
+    'case': TokenType.CASE,
+    'default': TokenType.DEFAULT,
+    'do': TokenType.DO,
     'while': TokenType.WHILE,
     'for': TokenType.FOR,
     'return': TokenType.RETURN,
-    'void': TokenType.TYPE_ANNOTATION,
-    'bool': TokenType.TYPE_ANNOTATION,
-    'char': TokenType.TYPE_ANNOTATION,
-    'u8': TokenType.TYPE_ANNOTATION,
-    'u16': TokenType.TYPE_ANNOTATION,
-    'u32': TokenType.TYPE_ANNOTATION,
-    'u64': TokenType.TYPE_ANNOTATION,
-    'i8': TokenType.TYPE_ANNOTATION,
-    'i16': TokenType.TYPE_ANNOTATION,
-    'i32': TokenType.TYPE_ANNOTATION,
-    'i64': TokenType.TYPE_ANNOTATION,
-    'f32': TokenType.TYPE_ANNOTATION,
-    'f64': TokenType.TYPE_ANNOTATION,
-    'string': TokenType.TYPE_ANNOTATION,
+    'break': TokenType.BREAK,
+    'continue': TokenType.CONTINUE,
+    'yield': TokenType.YIELD,
+
+    // Variable declarations & storage specifiers
+    'constexpr': TokenType.MUTABILITY_SPECIFIER,
+    'lateconst': TokenType.MUTABILITY_SPECIFIER,
+    'const': TokenType.MUTABILITY_SPECIFIER,
+    'latevar': TokenType.MUTABILITY_SPECIFIER,
+    'var': TokenType.MUTABILITY_SPECIFIER,
+    'thread_local': TokenType.STORAGE_SPECIFIER,
+    'global': TokenType.STORAGE_SPECIFIER,
+
+    // Function execution models
+    'function': TokenType.FUNCTION,
+    'lambda': TokenType.LAMBDA,
+    'async': TokenType.EXECUTION_MODEL_SPECIFIER,
+    'parallel': TokenType.EXECUTION_MODEL_SPECIFIER,
+    'await': TokenType.AWAIT,
+
+    // Class & struct system
+    'interface': TokenType.INTERFACE,
+    'implement': TokenType.IMPLEMENT,
+    'partial': TokenType.PARTIAL,
+    'class': TokenType.CLASS,
+    'struct': TokenType.STRUCT,
+    'enum': TokenType.ENUM,
+    'constructor': TokenType.CONSTRUCTOR,
+    'destructor': TokenType.DESTRUCTOR,
+
+    // RTTI
+    'typeinfo': TokenType.TYPEINFO,
+
+    // Memory management
+    'allocate': TokenType.ALLOCATE,
+    'deallocate': TokenType.DEALLOCATE,
   };
 }

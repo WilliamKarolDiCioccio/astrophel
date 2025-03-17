@@ -2,7 +2,7 @@
 
 // We ignore a few naming convention warnings because some lowercase names would conflict with dart's itself keywords.
 enum TokenType {
-  // Single-character tokens.
+  // Single-character tokens
   LEFT_PAREN,
   RIGHT_PAREN,
   LEFT_BRACKET,
@@ -11,12 +11,12 @@ enum TokenType {
   RIGHT_BRACE,
   DOT,
   COMMA,
-  COLON,
   SEMICOLON,
   DOLLAR,
-  AT,
   QUESTION,
-  // One or two character tokens.
+  // Two-character tokens
+  COLON,
+  COLON_EQUAL,
   PLUS,
   PLUS_EQUAL,
   INCREMENT,
@@ -34,16 +34,23 @@ enum TokenType {
   EQUAL,
   EQUAL_EQUAL,
   LESS,
+  LESS_LESS,
   LESS_EQUAL,
   GREATER,
+  GREATER_GREATER,
   GREATER_EQUAL,
   AMPERSAND,
   AMPERSAND_AMPERSAND,
-  HAT,
-  HAT_HAT,
+  AMPERSAND_EQUAL,
+  CARET,
+  CARET_EQUAL,
+  CARET_CARET,
   PIPE,
   PIPE_PIPE,
-  // Literals.
+  PIPE_EQUAL,
+  TILDE,
+  TILDE_EQUAL,
+  // Multi-character tokens
   IDENTIFIER,
   STRING_LITERAL,
   STRING_FRAGMENT_START,
@@ -53,18 +60,60 @@ enum TokenType {
   EXPRESSION_INTERPOLATION_START,
   EXPRESSION_INTERPOLATION_END,
   NUMBER,
-  // Keywords.
+
+  // Module system
   IMPORT,
   EXPORT,
+  AS,
+  FROM,
+
+  // Variable declarations & storage specifiers
+  MUTABILITY_SPECIFIER,
+  STORAGE_SPECIFIER,
+
+  // Function execution models
+  FUNCTION,
+  ARROW,
+  LAMBDA,
+  FAT_ARROW,
+  EXECUTION_MODEL_SPECIFIER,
+  AWAIT,
+
+  // Class & struct system
+  INTERFACE,
+  IMPLEMENT,
+  PARTIAL,
+  CLASS,
+  STRUCT,
+  ENUM,
+  CONSTRUCTOR,
+  DESTRUCTOR,
+
+  // RTTI
+  TYPEINFO,
+
+  // Memory management
+  ALLOCATE,
+  DEALLOCATE,
+
+  // Control flow
   IF,
   ELSE,
   SWITCH,
+  CASE,
+  DEFAULT,
+  DO,
   WHILE,
   FOR,
+  BREAK,
+  CONTINUE,
   RETURN,
-  // Data types (example types with size qualifiers)
-  TYPE_ANNOTATION,
-  // End-of-file.
+  YIELD,
+
+  // Annotations
+  ANNOTATION,
+
+  // Utility
   EOF,
 }
 
