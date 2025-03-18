@@ -1,37 +1,48 @@
-import 'ast_definitions.dart';
-import 'token_definitions.dart';
+import '../token_definitions.dart';
 
-// The declarations appear in ascending order of parsing precedence.
+import 'definitions.dart';
+import 'type_annotations.dart';
 
 /// Represents a lambda expression (anonymous function or closure).
 ///
 /// captures: The variables captured by the lambda expression.
 /// parameters: The parameters of the lambda expression.
 /// body: The body of the lambda expression.
-class ClosureExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.closure;
-  final List<IdentifierNode> captures;
-  final List<IdentifierNode> parameters;
+class LambdaExpressionNode extends ExpressionNode {
+  final Token? executionModelSpecifier;
+  final Token lambdaKeyword;
+  final List<ExpressionNode> parameters;
+  final TypeAnnotation? returnType;
   final StatementNode body;
 
-  ClosureExpressionNode({
-    required this.captures,
+  const LambdaExpressionNode({
+    required this.executionModelSpecifier,
+    required this.lambdaKeyword,
     required this.parameters,
+    required this.returnType,
     required this.body,
-  });
+  }) : super(ASTType.lambda);
 
   @override
   Map<String, dynamic> toJson() {
     return {
       'type': type.toString(),
-      'captures': captures.map((capture) => capture.toJson()).toList(),
+      'executionModelSpecifier': executionModelSpecifier?.lexeme,
+      'lambdaKeyword': lambdaKeyword.lexeme,
       'parameters': parameters.map((param) => param.toJson()).toList(),
+      'returnType': returnType?.toJson(),
       'body': body.toJson(),
     };
   }
 
   @override
-  List<Object?> get props => [captures, parameters, body];
+  List<Object?> get props => [
+    executionModelSpecifier,
+    lambdaKeyword,
+    parameters,
+    returnType,
+    body,
+  ];
 }
 
 /// Represents a ternary expression (commonly known as the inline conditional operator).
@@ -39,18 +50,16 @@ class ClosureExpressionNode extends ExpressionNode {
 /// condition: The condition to evaluate. Can be any expression that evaluates to a boolean or can be coerced to a boolean.
 /// thenBranch: The expression to evaluate if the condition is true.
 /// elseBranch: The expression to evaluate if the condition is false.
-
 class TernaryExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.ternary;
   final ExpressionNode condition;
   final ExpressionNode thenBranch;
   final ExpressionNode elseBranch;
 
-  TernaryExpressionNode({
+  const TernaryExpressionNode({
     required this.condition,
     required this.thenBranch,
     required this.elseBranch,
-  });
+  }) : super(ASTType.ternary);
 
   @override
   Map<String, dynamic> toJson() {
@@ -71,18 +80,16 @@ class TernaryExpressionNode extends ExpressionNode {
 /// target: The target of the assignment. Can be either an identifier or an index expression.
 /// value: The value to assign to the target.
 /// operator: The assignment operator, e.g., "=".
-
 class AssignmentExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.assignment;
   final ExpressionNode target;
   final ExpressionNode value;
   final Token operator;
 
-  AssignmentExpressionNode({
+  const AssignmentExpressionNode({
     required this.target,
     required this.value,
     required this.operator,
-  });
+  }) : super(ASTType.assignment);
 
   @override
   Map<String, dynamic> toJson() {
@@ -103,18 +110,16 @@ class AssignmentExpressionNode extends ExpressionNode {
 /// left: The left-hand side of the binary expression.
 /// right: The right-hand side of the binary expression.
 /// operator: The binary operator, can be logical, arithmetic, or comparison, e.g., "+", "&&", "<".
-
 class BinaryExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.binary;
   final ExpressionNode left;
   final ExpressionNode right;
   final Token operator;
 
-  BinaryExpressionNode({
+  const BinaryExpressionNode({
     required this.left,
     required this.right,
     required this.operator,
-  });
+  }) : super(ASTType.binary);
 
   @override
   Map<String, dynamic> toJson() {
@@ -136,13 +141,12 @@ class BinaryExpressionNode extends ExpressionNode {
 /// operator: The unary operator, e.g., "!", "-", "++".
 ///
 /// NOTE: It's common to refer prefix operators as unary operators. They are essentially the same thing.
-
 class UnaryExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.unary;
   final ExpressionNode operand;
   final Token operator;
 
-  UnaryExpressionNode({required this.operand, required this.operator});
+  const UnaryExpressionNode({required this.operand, required this.operator})
+    : super(ASTType.unary);
 
   @override
   Map<String, dynamic> toJson() {
@@ -161,18 +165,16 @@ class UnaryExpressionNode extends ExpressionNode {
 ///
 /// dot: Token representing the dot operator (used for error reporting).
 /// name: The name of the identifier to access.
-
 class IdentifierAccessExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.identifierAccess;
   final ExpressionNode object;
   final Token dot;
   final Token name;
 
-  IdentifierAccessExpressionNode({
+  const IdentifierAccessExpressionNode({
     required this.object,
     required this.dot,
     required this.name,
-  });
+  }) : super(ASTType.identifierAccess);
 
   @override
   Map<String, dynamic> toJson() {
@@ -192,18 +194,16 @@ class IdentifierAccessExpressionNode extends ExpressionNode {
 ///
 /// bracket: Token representing the bracket operator (used for error reporting).
 /// index: The index to access. Can be any expression that evaluates to an integer or can be coerced to an integer.
-
 class IndexAccessExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.indexAccess;
   final ExpressionNode object;
   final Token bracket;
   final ExpressionNode index;
 
-  IndexAccessExpressionNode({
+  const IndexAccessExpressionNode({
     required this.object,
     required this.bracket,
     required this.index,
-  });
+  }) : super(ASTType.indexAccess);
 
   @override
   Map<String, dynamic> toJson() {
@@ -219,53 +219,67 @@ class IndexAccessExpressionNode extends ExpressionNode {
   List<Object?> get props => [object, bracket, index];
 }
 
-/// Represents a function call.
+/// Represents a call expression (function, method, constructor, or lambda call).
 ///
 /// callee: The identifier or expression representing the function to call.
 /// paren: Token representing the closing parenthesis (used for error reporting).
 /// arguments: The arguments to pass to the function.
 ///
 /// NOTE: The identifier can be a constructor, a function, a method, a closure, or a variable that holds a function.
-
 class CallExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.call;
   final ExpressionNode callee;
-  final Token paren;
+  final Token leftParen;
   final List<ExpressionNode> arguments;
 
-  CallExpressionNode({
+  const CallExpressionNode({
     required this.callee,
-    required this.paren,
+    required this.leftParen,
     required this.arguments,
-  });
+  }) : super(ASTType.call);
 
   @override
   Map<String, dynamic> toJson() {
     return {
       'type': type.toString(),
       'callee': callee.toJson(),
-      'paren': paren.lexeme,
+      'leftParen': leftParen.lexeme,
       'arguments': arguments.map((arg) => arg.toJson()).toList(),
     };
   }
 
   @override
-  List<Object?> get props => [callee, paren, arguments];
+  List<Object?> get props => [callee, leftParen, arguments];
+}
+
+/// Represents an identifier.
+///
+/// name: The token representing the identifier.
+class IdentifierNode extends ExpressionNode {
+  final Token name;
+
+  const IdentifierNode({required this.name}) : super(ASTType.identifier);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {'type': type.toString(), 'name': name.lexeme};
+  }
+
+  @override
+  List<Object?> get props => [name];
 }
 
 /// Represents a numeric literal.
 ///
 /// value: The token representing the numeric literal.
-
 class NumericLiteralNode extends ExpressionNode {
-  static const ASTType type = ASTType.numericLiteral;
   final Token value;
 
-  NumericLiteralNode({required this.value});
+  const NumericLiteralNode({required this.value})
+    : super(ASTType.numericLiteral);
 
   @override
   Map<String, dynamic> toJson() {
-    return {'type': type.toString(), 'value': value.lexeme};
+    return {'type': type.toString(), 'value': value.literal};
   }
 
   @override
@@ -275,16 +289,14 @@ class NumericLiteralNode extends ExpressionNode {
 /// Represents a string literal.
 ///
 /// value: The token representing the string literal.
-
 class StringLiteralNode extends ExpressionNode {
-  static const ASTType type = ASTType.stringLiteral;
   final Token value;
 
-  StringLiteralNode({required this.value});
+  const StringLiteralNode({required this.value}) : super(ASTType.stringLiteral);
 
   @override
   Map<String, dynamic> toJson() {
-    return {'type': type.toString(), 'value': value.lexeme};
+    return {'type': type.toString(), 'value': value.literal};
   }
 
   @override
@@ -296,54 +308,40 @@ class StringLiteralNode extends ExpressionNode {
 /// value: The token representing the string literal.
 ///
 /// NOTE: This is a special case of a string literal where the string contains interpolated expressions.
-
 class StringFragmentNode extends ExpressionNode {
-  static const ASTType type = ASTType.stringFragment;
   final Token value;
 
-  StringFragmentNode({required this.value});
+  const StringFragmentNode({required this.value})
+    : super(ASTType.stringFragment);
 
   @override
   Map<String, dynamic> toJson() {
-    return {'type': type.toString(), 'value': value.lexeme};
+    return {'type': type.toString(), 'value': value.literal};
   }
 
   @override
   List<Object?> get props => [value];
 }
 
-/// Represents an identifier.
-///
-/// name: The token representing the identifier.
-
-class IdentifierNode extends ExpressionNode {
-  static const ASTType type = ASTType.identifier;
-  final Token name;
-
-  IdentifierNode({required this.name});
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {'type': type.toString(), 'name': name.lexeme};
-  }
-
-  @override
-  List<Object?> get props => [name];
-}
-
 /// Represents a grouping expression to manipulate precedence.
 ///
 /// expression: The expression inside the grouping.
-
 class GroupingExpressionNode extends ExpressionNode {
-  static const ASTType type = ASTType.grouping;
   final ExpressionNode expression;
+  final Token leftParen;
 
-  GroupingExpressionNode({required this.expression});
+  const GroupingExpressionNode({
+    required this.expression,
+    required this.leftParen,
+  }) : super(ASTType.grouping);
 
   @override
   Map<String, dynamic> toJson() {
-    return {'type': type.toString(), 'expression': expression.toJson()};
+    return {
+      'type': type.toString(),
+      'expression': expression.toJson(),
+      'leftParen': leftParen.lexeme,
+    };
   }
 
   @override
@@ -355,12 +353,11 @@ class GroupingExpressionNode extends ExpressionNode {
 /// fragments: The fragments that make up the string interpolation.
 ///
 /// NOTE: A string interpolation is a string that contains expressions that are evaluated and concatenated to the string.
-
 class StringInterpolationNode extends ExpressionNode {
-  static const ASTType type = ASTType.stringExpressionInterpolation;
   final List<ExpressionNode> fragments;
 
-  StringInterpolationNode({required this.fragments});
+  const StringInterpolationNode({required this.fragments})
+    : super(ASTType.stringInterpolation);
 
   @override
   Map<String, dynamic> toJson() {
@@ -372,4 +369,28 @@ class StringInterpolationNode extends ExpressionNode {
 
   @override
   List<Object?> get props => [fragments];
+}
+
+/// Represents an array literal.
+///
+/// elements: The elements that make up the array.
+/// leftBracket: Token representing the opening bracket (used for error reporting).
+class ArrayLiteralNode extends ExpressionNode {
+  final Token leftBracket;
+  final List<ExpressionNode> elements;
+
+  const ArrayLiteralNode({required this.leftBracket, required this.elements})
+    : super(ASTType.arrayLiteral);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.toString(),
+      'leftBracket': leftBracket.lexeme,
+      'elements': elements.map((element) => element.toJson()).toList(),
+    };
+  }
+
+  @override
+  List<Object?> get props => [leftBracket, elements];
 }

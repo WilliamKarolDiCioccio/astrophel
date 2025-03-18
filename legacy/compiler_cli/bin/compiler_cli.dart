@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:compiler/compiler.dart';
-import 'package:compiler/src/shared/ast_definitions.dart';
+import 'package:compiler/src/shared/ast/definitions.dart';
 
 const String version = '0.0.1';
 

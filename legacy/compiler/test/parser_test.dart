@@ -1,5 +1,5 @@
 import 'package:compiler/compiler.dart';
-import 'package:compiler/src/shared/ast_definitions.dart';
+import 'package:compiler/src/shared/ast/definitions.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -109,7 +109,7 @@ void main() {
         ];
 
         final parser = Parser(tokens);
-        final result = parser.parseLogicalExpression();
+        final result = parser.parseLogicalOrExpression();
 
         expect(result, isA<BinaryExpressionNode>());
         final binaryNode = result as BinaryExpressionNode;
@@ -127,7 +127,7 @@ void main() {
         ];
 
         final parser = Parser(tokens);
-        final result = parser.parseLogicalExpression();
+        final result = parser.parseLogicalOrExpression();
 
         expect(result, isA<BinaryExpressionNode>());
         final binaryNode = result as BinaryExpressionNode;
@@ -143,7 +143,7 @@ void main() {
         ];
 
         final parser = Parser(tokens);
-        final result = parser.parseLogicalExpression();
+        final result = parser.parseLogicalOrExpression();
 
         expect(result, isA<IdentifierNode>());
       });
@@ -159,7 +159,7 @@ void main() {
         ];
 
         final parser = Parser(tokens);
-        final result = parser.parseLogicalExpression();
+        final result = parser.parseLogicalOrExpression();
 
         expect(result, isA<BinaryExpressionNode>());
         final binaryNode = result as BinaryExpressionNode;
@@ -550,50 +550,54 @@ void main() {
 
     group('Parser Integration Tests', () {
       test('Arithmetic precedence: 1 + 2 * 3', () {
-        final Lexer lexer = Lexer("1 + 2 * 3");
+        final Lexer lexer = Lexer("1 + 2 * 3;");
         final tokens = lexer.tokenize();
         final parser = Parser(tokens);
         final ast = parser.produceAST();
 
-        final expectedAST =
-            ModuleNode()
-              ..statements.add(
-                BinaryExpressionNode(
-                  left: NumericLiteralNode(value: tokens[0]),
-                  right: BinaryExpressionNode(
-                    left: NumericLiteralNode(value: tokens[2]),
-                    right: NumericLiteralNode(value: tokens[4]),
-                    operator: tokens[3],
-                  ),
-                  operator: tokens[1],
+        final expectedAST = ModuleNode(
+          statements: [
+            ExpressionStatementNode(
+              expression: BinaryExpressionNode(
+                left: NumericLiteralNode(value: tokens[0]),
+                right: BinaryExpressionNode(
+                  left: NumericLiteralNode(value: tokens[2]),
+                  right: NumericLiteralNode(value: tokens[4]),
+                  operator: tokens[3],
                 ),
-              );
+                operator: tokens[1],
+              ),
+            ),
+          ],
+        );
 
         expect(ast, equals(expectedAST));
       });
 
       test('Postfix precedence: a.b(c)++', () {
-        final Lexer lexer = Lexer("a.b(c)++");
+        final Lexer lexer = Lexer("a.b(c)++;");
         final tokens = lexer.tokenize();
         final parser = Parser(tokens);
         final ast = parser.produceAST();
 
-        final expectedAST =
-            ModuleNode()
-              ..statements.add(
-                UnaryExpressionNode(
-                  operand: CallExpressionNode(
-                    callee: IdentifierAccessExpressionNode(
-                      object: IdentifierNode(name: tokens[0]),
-                      dot: tokens[1],
-                      name: tokens[2],
-                    ),
-                    paren: tokens[5],
-                    arguments: [IdentifierNode(name: tokens[4])],
+        final expectedAST = ModuleNode(
+          statements: [
+            ExpressionStatementNode(
+              expression: UnaryExpressionNode(
+                operand: CallExpressionNode(
+                  callee: IdentifierAccessExpressionNode(
+                    object: IdentifierNode(name: tokens[0]),
+                    dot: tokens[1],
+                    name: tokens[2],
                   ),
-                  operator: tokens[6],
+                  leftParen: tokens[3],
+                  arguments: [IdentifierNode(name: tokens[4])],
                 ),
-              );
+                operator: tokens[6],
+              ),
+            ),
+          ],
+        );
 
         expect(ast, equals(expectedAST));
       });
