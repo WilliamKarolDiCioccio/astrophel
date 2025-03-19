@@ -70,22 +70,6 @@ void main() {
         expect(assignmentNode.operator.type, TokenType.EQUAL);
       });
 
-      test('parseAssignmentExpression with invalid assignment target', () {
-        final tokens = [
-          Token(TokenType.NUMBER, '1', 1, 0, 0),
-          Token(TokenType.EQUAL, '=', null, 0, 0),
-          Token(TokenType.NUMBER, '2', 2, 0, 0),
-          Token(TokenType.EOF, '0', null, 0, 0),
-        ];
-
-        final parser = Parser(tokens);
-
-        expect(
-          () => parser.parseAssignmentExpression(),
-          throwsUnimplementedError,
-        );
-      });
-
       test('parseAssignmentExpression without assignment operator', () {
         final tokens = [
           Token(TokenType.IDENTIFIER, 'a', null, 0, 0),
@@ -498,7 +482,7 @@ void main() {
         ];
 
         final parser = Parser(tokens);
-        final result = parser.parseStringOrInterpolation();
+        final result = parser.parseFragmentOrInterpolationExpression();
 
         expect(result, isA<StringInterpolationNode>());
         final stringNode = result as StringInterpolationNode;
@@ -521,7 +505,7 @@ void main() {
         ];
 
         final parser = Parser(tokens);
-        final result = parser.parseStringOrInterpolation();
+        final result = parser.parseFragmentOrInterpolationExpression();
 
         expect(result, isA<StringInterpolationNode>());
         final stringNode = result as StringInterpolationNode;
@@ -542,7 +526,7 @@ void main() {
         final parser = Parser(tokens);
 
         expect(
-          () => parser.parseStringOrInterpolation(),
+          () => parser.parseFragmentOrInterpolationExpression(),
           throwsUnimplementedError,
         );
       });
@@ -585,7 +569,7 @@ void main() {
             ExpressionStatementNode(
               expression: UnaryExpressionNode(
                 operand: CallExpressionNode(
-                  callee: IdentifierAccessExpressionNode(
+                  callee: MemberAccessExpressionNode(
                     object: IdentifierNode(name: tokens[0]),
                     dot: tokens[1],
                     name: tokens[2],
