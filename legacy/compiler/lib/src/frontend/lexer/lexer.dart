@@ -540,6 +540,7 @@ class Lexer {
     'partial': TokenType.PARTIAL,
     'class': TokenType.CLASS,
     'struct': TokenType.STRUCT,
+    'union': TokenType.UNION,
     'enum': TokenType.ENUM,
     'constructor': TokenType.CONSTRUCTOR,
     'destructor': TokenType.DESTRUCTOR,

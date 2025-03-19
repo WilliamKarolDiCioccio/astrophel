@@ -61,6 +61,8 @@ class Parser {
       statement = parseClassDeclaration(metaAnnotations);
     } else if (tk.type == TokenType.STRUCT) {
       statement = parseStructDeclaration(metaAnnotations);
+    } else if (tk.type == TokenType.UNION) {
+      statement = parseUnionDeclaration(metaAnnotations);
     } else if (tk.type == TokenType.ENUM) {
       statement = parseEnumDeclaration(metaAnnotations);
     } else if (tk.type == TokenType.CONSTRUCTOR) {
@@ -380,13 +382,23 @@ class Parser {
       message: "Expected '{' for class declaration, instead got ${_peek()}",
     );
 
-    List<FieldDeclarationNode> fields = [];
-    List<MethodDeclarationNode> methods = [];
+    final List<FieldDeclarationNode> fields = [];
+    final List<MethodDeclarationNode> methods = [];
+    final List<UnionDeclarationNode> unions = [];
     ConstructorDeclarationNode? constructor;
     DestructorDeclarationNode? destructor;
 
     while (!_match(TokenType.RIGHT_BRACE)) {
-      final tk = _peek();
+      var tk = _peek();
+
+      MetaAnnotations? metaAnnotations;
+
+      if (tk.type == TokenType.LEFT_BRACKET &&
+          _matchIn(1, TokenType.ANNOTATION)) {
+        metaAnnotations = parseMetaAnnotations();
+      }
+
+      tk = _peek(); // Re-evaluate the token after parsing meta annotations.
 
       if (tk.type == TokenType.CONSTRUCTOR) {
         if (constructor != null) {
@@ -407,6 +419,8 @@ class Parser {
         } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
           fields.add(parseVariableDeclaration(metaAnnotations));
         }
+      } else if (tk.type == TokenType.UNION) {
+        unions.add(parseUnionDeclaration(metaAnnotations));
       } else if (tk.type == TokenType.EXECUTION_MODEL_SPECIFIER ||
           tk.type == TokenType.FUNCTION) {
         methods.add(parseFunctionDeclaration(metaAnnotations));
@@ -428,8 +442,10 @@ class Parser {
       classKeyword: classKeyword,
       name: IdentifierNode(name: name),
       constructor: constructor,
+      destructor: destructor,
       fields: fields,
       methods: methods,
+      unions: unions,
     );
   }
 
@@ -453,12 +469,22 @@ class Parser {
       message: "Expected '{' for class declaration, instead got ${_peek()}",
     );
 
-    List<FieldDeclarationNode> fields = [];
+    final List<FieldDeclarationNode> fields = [];
+    final List<UnionDeclarationNode> unions = [];
     ConstructorDeclarationNode? constructor;
     DestructorDeclarationNode? destructor;
 
     while (!_match(TokenType.RIGHT_BRACE)) {
-      final tk = _peek();
+      var tk = _peek();
+
+      MetaAnnotations? metaAnnotations;
+
+      if (tk.type == TokenType.LEFT_BRACKET &&
+          _matchIn(1, TokenType.ANNOTATION)) {
+        metaAnnotations = parseMetaAnnotations();
+      }
+
+      tk = _peek(); // Re-evaluate the token after parsing meta annotations.
 
       if (tk.type == TokenType.CONSTRUCTOR) {
         if (constructor != null) {
@@ -472,6 +498,8 @@ class Parser {
         }
 
         destructor = parseDestructorDeclaration(metaAnnotations);
+      } else if (tk.type == TokenType.UNION) {
+        unions.add(parseUnionDeclaration(metaAnnotations));
       } else if (tk.type == TokenType.STORAGE_SPECIFIER ||
           tk.type == TokenType.MUTABILITY_SPECIFIER) {
         fields.add(parseVariableDeclaration(metaAnnotations));
@@ -490,6 +518,46 @@ class Parser {
       structKeyword: structKeyword,
       name: IdentifierNode(name: name),
       constructor: constructor,
+      destructor: destructor,
+      fields: fields,
+      unions: unions,
+    );
+  }
+
+  /// See [UnionDeclarationNode] for more information.
+  @visibleForTesting
+  UnionDeclarationNode parseUnionDeclaration(MetaAnnotations? metaAnnotations) {
+    Token unionKeyword = _advance(
+      TokenType.UNION,
+      message: "Expected 'union' keyword, instead got ${_peek()}",
+    );
+
+    _advance(
+      TokenType.LEFT_BRACE,
+      message: "Expected '{' for union declaration, instead got ${_peek()}",
+    );
+
+    List<FieldDeclarationNode> fields = [];
+
+    while (!_match(TokenType.RIGHT_BRACE)) {
+      final tk = _peek();
+
+      if (tk.type == TokenType.STORAGE_SPECIFIER ||
+          tk.type == TokenType.MUTABILITY_SPECIFIER) {
+        fields.add(parseVariableDeclaration(metaAnnotations));
+      } else {
+        throw UnimplementedError("Unexpected token: $tk");
+      }
+    }
+
+    _advance(
+      TokenType.RIGHT_BRACE,
+      message: "Expected '}' for union declaration, instead got ${_peek()}",
+    );
+
+    return UnionDeclarationNode(
+      metaAnnotations: metaAnnotations,
+      unionKeyword: unionKeyword,
       fields: fields,
     );
   }

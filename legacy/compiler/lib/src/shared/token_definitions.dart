@@ -85,6 +85,7 @@ enum TokenType {
   PARTIAL,
   CLASS,
   STRUCT,
+  UNION,
   ENUM,
   CONSTRUCTOR,
   DESTRUCTOR,

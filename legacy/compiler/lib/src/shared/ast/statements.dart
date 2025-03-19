@@ -267,17 +267,21 @@ class ClassDeclarationNode extends StatementNode {
   final Token classKeyword;
   final IdentifierNode name;
   final ConstructorDeclarationNode? constructor;
+  final DestructorDeclarationNode? destructor;
   final List<FieldDeclarationNode> fields;
   final List<MethodDeclarationNode> methods;
+  final List<UnionDeclarationNode> unions;
 
   const ClassDeclarationNode({
     this.metaAnnotations,
-    required this.partialKeyword,
+    this.partialKeyword,
     required this.classKeyword,
     required this.name,
-    required this.constructor,
+    this.constructor,
+    this.destructor,
     required this.fields,
     required this.methods,
+    required this.unions,
   }) : super(ASTType.constructorDeclaration);
 
   @override
@@ -289,8 +293,10 @@ class ClassDeclarationNode extends StatementNode {
       'classKeyword': classKeyword.lexeme,
       'name': name.toJson(),
       if (constructor != null) 'constructor': constructor!.toJson(),
+      if (destructor != null) 'destructor': destructor!.toJson(),
       'fields': fields.map((f) => f.toJson()).toList(),
       'methods': methods.map((m) => m.toJson()).toList(),
+      'unions': unions.map((u) => u.toJson()).toList(),
     };
   }
 
@@ -301,8 +307,10 @@ class ClassDeclarationNode extends StatementNode {
     classKeyword,
     name,
     constructor,
+    destructor,
     fields,
     methods,
+    unions,
   ];
 }
 
@@ -326,14 +334,18 @@ class StructDeclarationNode extends StatementNode {
   final Token structKeyword;
   final IdentifierNode name;
   final ConstructorDeclarationNode? constructor;
+  final DestructorDeclarationNode? destructor;
   final List<FieldDeclarationNode> fields;
+  final List<UnionDeclarationNode> unions;
 
   const StructDeclarationNode({
     this.metaAnnotations,
     required this.structKeyword,
     required this.name,
-    required this.constructor,
+    this.constructor,
+    this.destructor,
     required this.fields,
+    required this.unions,
   }) : super(ASTType.structDeclaration);
 
   @override
@@ -344,7 +356,9 @@ class StructDeclarationNode extends StatementNode {
       'structKeyword': structKeyword.lexeme,
       'name': name.toJson(),
       if (constructor != null) 'constructor': constructor!.toJson(),
+      if (destructor != null) 'destructor': destructor!.toJson(),
       'fields': fields.map((f) => f.toJson()).toList(),
+      'unions': unions.map((u) => u.toJson()).toList(),
     };
   }
 
@@ -354,8 +368,43 @@ class StructDeclarationNode extends StatementNode {
     structKeyword,
     name,
     constructor,
+    destructor,
     fields,
+    unions,
   ];
+}
+
+/// Represents a union declaration.
+///
+/// e.g. union {
+///  i32 x, r;
+/// }
+///
+/// unionKeyword: The "union" keyword.
+/// fields: A list of fields in the union.
+class UnionDeclarationNode extends StatementNode {
+  final MetaAnnotations? metaAnnotations;
+  final Token unionKeyword;
+  final List<FieldDeclarationNode> fields;
+
+  const UnionDeclarationNode({
+    this.metaAnnotations,
+    required this.unionKeyword,
+    required this.fields,
+  }) : super(ASTType.unionDeclaration);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.toString(),
+      if (metaAnnotations != null) 'metaAnnotations': metaAnnotations!.toJson(),
+      'unionKeyword': unionKeyword.lexeme,
+      'fields': fields.map((f) => f.toJson()).toList(),
+    };
+  }
+
+  @override
+  List<Object?> get props => [metaAnnotations, unionKeyword, fields];
 }
 
 /// Represents a constructor declaration for a class or struct.

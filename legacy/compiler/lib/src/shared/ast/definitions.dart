@@ -20,6 +20,7 @@ enum ASTType {
   interfaceImplementation,
   classDeclaration,
   structDeclaration,
+  unionDeclaration,
   enumDeclaration,
   enumVariant,
   constructorDeclaration,
