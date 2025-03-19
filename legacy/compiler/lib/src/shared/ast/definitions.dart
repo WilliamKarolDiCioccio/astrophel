@@ -54,16 +54,18 @@ enum ASTType {
   unary,
   postfix,
   call,
+  memberAccess,
   indexAccess,
-  identifierAccess,
+  tupleAccess,
   // Primary expressions
   numericLiteral,
   stringLiteral,
   stringFragment,
   stringInterpolation,
   arrayLiteral,
-  identifier,
+  tupleLiteral,
   grouping,
+  identifier,
 }
 
 // NOTE: I'm not using the `interface` keyword here because Dart doesn't allow for

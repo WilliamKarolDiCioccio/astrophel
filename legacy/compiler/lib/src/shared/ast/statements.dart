@@ -1,15 +1,14 @@
-import 'package:compiler/src/shared/ast/meta_annotations.dart';
 import 'package:compiler/src/shared/ast/templates.dart';
 
+import '../../shared/ast/definitions.dart';
+import '../../shared/ast/meta_annotations.dart';
+import '../../shared/ast/type_annotations.dart';
 import '../../shared/token_definitions.dart';
-
-import 'definitions.dart';
-import 'type_annotations.dart';
 
 // The declarations appear in an intuitive order as statements don't really have a parsing precedence.
 
 typedef MethodDeclarationNode = FunctionDeclarationNode;
-typedef FieldDeclarationNode = VariableDeclarationNode;
+typedef FieldDeclarationNode = MultiVariableDeclarationNode;
 typedef ConstructorParameterNode = ParameterNode;
 typedef FunctionParameterNode = ParameterNode;
 
@@ -389,6 +388,7 @@ class StructDeclarationNode extends StatementNode {
 ///  i32 x, r;
 /// }
 ///
+/// metaAnnotations: A list of meta annotations for the union.
 /// unionKeyword: The "union" keyword.
 /// fields: A list of fields in the union.
 class UnionDeclarationNode extends StatementNode {
@@ -567,17 +567,14 @@ class FunctionDeclarationNode extends StatementNode {
 /// storageSpecifier: The storage specifier (var, let, const).
 /// mutabilitySpecifier: The mutability specifier (constexpr, lateconst, const, latevar, var).
 /// typeAnnotation: The type annotation (e.g., i32, f64).
-/// name: The name of the variable.
-/// initializer: An optional initializer expression.
-class VariableDeclarationNode extends StatementNode {
-  final MetaAnnotations? metaAnnotations;
+/// nameInitializerPairs: A list of name-initializer pairs (allowing multiple declarations).
+class MultiVariableDeclarationNode extends StatementNode {
   final Token? storageSpecifier;
   final Token? mutabilitySpecifier;
   final TypeAnnotation? typeAnnotation;
   final List<(IdentifierNode, ExpressionNode?)> nameInitializerPairs;
 
-  const VariableDeclarationNode({
-    this.metaAnnotations,
+  const MultiVariableDeclarationNode({
     this.storageSpecifier,
     this.mutabilitySpecifier,
     this.typeAnnotation,

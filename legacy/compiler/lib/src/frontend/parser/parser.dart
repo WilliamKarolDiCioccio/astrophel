@@ -95,7 +95,7 @@ class Parser {
         metaAnnotationsConsumed = true;
         templateConsumed = true;
       } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
-        statement = parseVariableDeclaration(metaAnnotations);
+        statement = parseMultiVariableDeclaration(metaAnnotations);
         metaAnnotationsConsumed = true;
       } else {
         throw UnimplementedError("Unexpected token: $tk");
@@ -106,7 +106,7 @@ class Parser {
       metaAnnotationsConsumed = true;
       templateConsumed = true;
     } else if (tk.type == TokenType.MUTABILITY_SPECIFIER) {
-      statement = parseVariableDeclaration(metaAnnotations);
+      statement = parseMultiVariableDeclaration(metaAnnotations);
       metaAnnotationsConsumed = true;
     } else if (tk.type == TokenType.IF) {
       statement = parseIfStatement();
@@ -498,7 +498,7 @@ class Parser {
           metaAnnotationsConsumed = true;
           templateConsumed = true;
         } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
-          fields.add(parseVariableDeclaration(metaAnnotations));
+          fields.add(parseMultiVariableDeclaration(metaAnnotations));
           metaAnnotationsConsumed = true;
         }
       } else if (tk.type == TokenType.UNION) {
@@ -510,7 +510,7 @@ class Parser {
         metaAnnotationsConsumed = true;
         templateConsumed = true;
       } else if (tk.type == TokenType.MUTABILITY_SPECIFIER) {
-        fields.add(parseVariableDeclaration(metaAnnotations));
+        fields.add(parseMultiVariableDeclaration(metaAnnotations));
         metaAnnotationsConsumed = true;
       } else {
         throw UnimplementedError("Unexpected token: $tk");
@@ -600,7 +600,7 @@ class Parser {
         unions.add(parseUnionDeclaration(metaAnnotations));
       } else if (tk.type == TokenType.STORAGE_SPECIFIER ||
           tk.type == TokenType.MUTABILITY_SPECIFIER) {
-        fields.add(parseVariableDeclaration(metaAnnotations));
+        fields.add(parseMultiVariableDeclaration(metaAnnotations));
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -643,7 +643,7 @@ class Parser {
 
       if (tk.type == TokenType.STORAGE_SPECIFIER ||
           tk.type == TokenType.MUTABILITY_SPECIFIER) {
-        fields.add(parseVariableDeclaration(metaAnnotations));
+        fields.add(parseMultiVariableDeclaration(metaAnnotations));
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -818,7 +818,7 @@ class Parser {
 
   /// See [ParameterNode] for more information.
   @visibleForTesting
-  VariableDeclarationNode parseVariableDeclaration(
+  MultiVariableDeclarationNode parseMultiVariableDeclaration(
     MetaAnnotations? metaAnnotations,
   ) {
     Token? storageSpecifier;
@@ -858,8 +858,7 @@ class Parser {
           return (IdentifierNode(name: name), initializer);
         });
 
-    return VariableDeclarationNode(
-      metaAnnotations: metaAnnotations,
+    return MultiVariableDeclarationNode(
       storageSpecifier: storageSpecifier,
       mutabilitySpecifier: mutabilitySpecifier,
       typeAnnotation: typeAnnotation,
@@ -1060,7 +1059,7 @@ class Parser {
       message: "Expected '(' for for statement, instead got ${_peek()}",
     );
 
-    VariableDeclarationNode? counterInitializer;
+    MultiVariableDeclarationNode? counterInitializer;
 
     if (!_match(TokenType.SEMICOLON)) {
       if (_match(TokenType.STORAGE_SPECIFIER)) {
@@ -1095,8 +1094,7 @@ class Parser {
 
       final initializer = parseExpression();
 
-      counterInitializer = VariableDeclarationNode(
-        metaAnnotations: null,
+      counterInitializer = MultiVariableDeclarationNode(
         storageSpecifier: null,
         mutabilitySpecifier: null,
         typeAnnotation: typeAnnotation,
@@ -1314,17 +1312,11 @@ class Parser {
 
       final ExpressionNode value = parseExpression();
 
-      if (expression is IdentifierNode ||
-          expression is IdentifierAccessExpressionNode ||
-          expression is IndexAccessExpressionNode) {
-        return AssignmentExpressionNode(
-          target: expression,
-          value: value,
-          operator: operator,
-        );
-      } else {
-        throw UnimplementedError("Invalid assignment target: $expression");
-      }
+      return AssignmentExpressionNode(
+        target: expression,
+        value: value,
+        operator: operator,
+      );
     }
 
     return expression;
@@ -1494,7 +1486,7 @@ class Parser {
     return parsePostfixExpression();
   }
 
-  /// See [IdentifierAccessExpressionNode], [IndexAccessExpressionNode],
+  /// See [MemberAccessExpressionNode], [IndexAccessExpressionNode],
   /// [UnaryExpressionNode] or [CallExpressionNode] for more information.
   @visibleForTesting
   ExpressionNode parsePostfixExpression() {
@@ -1504,17 +1496,23 @@ class Parser {
       if (_match(TokenType.DOT)) {
         final dot = _advance(null); // Consume the dot token
 
-        final name = _advance(
-          TokenType.IDENTIFIER,
-          message:
-              "Expected identifier after dot token, instead got ${_peek()}",
-        );
+        if (_match(TokenType.IDENTIFIER)) {
+          final name = _advance(null); // Consume the identifier token
 
-        expression = IdentifierAccessExpressionNode(
-          object: expression,
-          dot: dot,
-          name: name,
-        );
+          expression = MemberAccessExpressionNode(
+            object: expression,
+            dot: dot,
+            name: name,
+          );
+        } else if (_match(TokenType.NUMBER)) {
+          final index = _advance(null); // Consume the number token
+
+          expression = TupleAccessExpressionNode(
+            object: expression,
+            dot: dot,
+            index: index,
+          );
+        }
       } else if (_match(TokenType.INCREMENT) || _match(TokenType.DECREMENT)) {
         expression = UnaryExpressionNode(
           operand: expression,
@@ -1577,7 +1575,7 @@ class Parser {
   /// See [StringLiteralNode], [StringFragmentNode]
   /// or [StringInterpolationNode] for more information.
   @visibleForTesting
-  ExpressionNode parseStringOrInterpolation() {
+  ExpressionNode parseFragmentOrInterpolationExpression() {
     List<ExpressionNode> fragments = [];
 
     final value = _advance(
@@ -1645,7 +1643,7 @@ class Parser {
 
   /// See [ArrayLiteralNode] for more information.
   @visibleForTesting
-  ExpressionNode parseArrayExpression() {
+  ExpressionNode parseArrayLiteralExpression() {
     final leftBracket = _peek(); // Already consumed by parseList
 
     final elements = parseList(
@@ -1658,6 +1656,21 @@ class Parser {
     return ArrayLiteralNode(leftBracket: leftBracket, elements: elements);
   }
 
+  /// See [TupleLiteralNode] for more information.
+  @visibleForTesting
+  ExpressionNode parseTupleLiteralExpression() {
+    final leftBrace = _peek(); // Already consumed by parseList
+
+    final elements = parseList(
+      {TokenType.LEFT_BRACE},
+      {TokenType.RIGHT_BRACE},
+      TokenType.COMMA,
+      parseExpression,
+    );
+
+    return TupleLiteralNode(leftBrace: leftBrace, elements: elements);
+  }
+
   /// Primary expressions parsing entry point.
   @visibleForTesting
   ExpressionNode parsePrimaryExpression() {
@@ -1666,10 +1679,6 @@ class Parser {
     ExpressionNode expression;
 
     switch (tk.type) {
-      case TokenType.IDENTIFIER:
-        expression = IdentifierNode(name: tk);
-        _advance(null);
-        break;
       case TokenType.NUMBER:
         expression = NumericLiteralNode(value: tk);
         _advance(null);
@@ -1679,13 +1688,20 @@ class Parser {
         _advance(null);
         break;
       case TokenType.STRING_FRAGMENT_START:
-        expression = parseStringOrInterpolation();
-        break;
-      case TokenType.LEFT_BRACKET:
-        expression = parseArrayExpression();
+        expression = parseFragmentOrInterpolationExpression();
         break;
       case TokenType.LEFT_PAREN:
         expression = parseGroupingExpression();
+        break;
+      case TokenType.LEFT_BRACKET:
+        expression = parseArrayLiteralExpression();
+        break;
+      case TokenType.LEFT_BRACE:
+        expression = parseTupleLiteralExpression();
+        break;
+      case TokenType.IDENTIFIER:
+        expression = IdentifierNode(name: tk);
+        _advance(null);
         break;
       default:
         throw UnimplementedError("Unexpected token: $tk");
@@ -1838,6 +1854,23 @@ class Parser {
 
   @visibleForTesting
   TypeAnnotation parseTypeAnnotation() {
+    if (_match(TokenType.LEFT_BRACE)) {
+      final elements = parseList(
+        {TokenType.LEFT_BRACE},
+        {TokenType.RIGHT_BRACE},
+        TokenType.COMMA,
+        parseTypeAnnotation,
+      );
+
+      Token? pointer;
+
+      if (_match(TokenType.STAR)) {
+        pointer = _advance(null); // Consume the star token
+      }
+
+      return TupleTypeAnnotation(elements: elements, pointer: pointer);
+    }
+
     final name = _advance(
       TokenType.IDENTIFIER,
       message:
@@ -1851,7 +1884,7 @@ class Parser {
         {TokenType.LESS},
         {TokenType.GREATER},
         TokenType.COMMA,
-        () => parseTypeAnnotation(),
+        parseTypeAnnotation,
       );
     }
 
@@ -1882,13 +1915,15 @@ class Parser {
 
     if (size != null) {
       return ArrayTypeAnnotation(
-        name: name,
-        templateArguments: templateArguments,
+        name: AtomicTypeAnnotation(
+          name: name,
+          templateArguments: templateArguments,
+          pointer: pointer,
+        ),
         size: size,
-        pointer: pointer,
       );
     } else {
-      return TypeAnnotation(
+      return AtomicTypeAnnotation(
         name: name,
         templateArguments: templateArguments,
         pointer: pointer,
