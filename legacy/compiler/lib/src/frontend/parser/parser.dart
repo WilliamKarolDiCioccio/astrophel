@@ -1,3 +1,4 @@
+import 'package:compiler/src/shared/ast/templates.dart';
 import 'package:meta/meta.dart';
 
 import '../../shared/ast/definitions.dart';
@@ -34,13 +35,23 @@ class Parser {
     var tk = _peek();
 
     MetaAnnotations? metaAnnotations;
+    bool metaAnnotationsConsumed = false;
 
     if (tk.type == TokenType.LEFT_BRACKET &&
         _matchIn(1, TokenType.ANNOTATION)) {
       metaAnnotations = parseMetaAnnotations();
     }
 
-    tk = _peek(); // Re-evaluate the token after parsing meta annotations.
+    tk = _peek(); // Re-evaluate the token after parsing meta-annotations.
+
+    Template? template;
+    bool templateConsumed = false;
+
+    if (tk.type == TokenType.TEMPLATE) {
+      template = parseTemplate();
+    }
+
+    tk = _peek(); // Re-evaluate the token after parsing template.
 
     late StatementNode statement;
 
@@ -55,33 +66,48 @@ class Parser {
       statement = parseSymbolWiseImportStatement();
     } else if (tk.type == TokenType.INTERFACE) {
       statement = parseInterfaceDeclaration(metaAnnotations);
+      metaAnnotationsConsumed = true;
     } else if (tk.type == TokenType.IMPLEMENT) {
-      statement = parseInterfaceImplementationDeclaration(metaAnnotations);
+      statement = parseInterfaceImplementation(metaAnnotations);
+      metaAnnotationsConsumed = true;
     } else if (tk.type == TokenType.PARTIAL || tk.type == TokenType.CLASS) {
-      statement = parseClassDeclaration(metaAnnotations);
+      statement = parseClassDeclaration(metaAnnotations, template);
+      metaAnnotationsConsumed = true;
+      templateConsumed = true;
     } else if (tk.type == TokenType.STRUCT) {
-      statement = parseStructDeclaration(metaAnnotations);
+      statement = parseStructDeclaration(metaAnnotations, template);
+      metaAnnotationsConsumed = true;
+      templateConsumed = true;
     } else if (tk.type == TokenType.UNION) {
       statement = parseUnionDeclaration(metaAnnotations);
+      metaAnnotationsConsumed = true;
     } else if (tk.type == TokenType.ENUM) {
       statement = parseEnumDeclaration(metaAnnotations);
+      metaAnnotationsConsumed = true;
     } else if (tk.type == TokenType.CONSTRUCTOR) {
       statement = parseConstructorDeclaration(metaAnnotations);
+      metaAnnotationsConsumed = true;
     }
     // NOTE: Function and variable declarations require arbitrary lookahead for disambiguation.
     else if (tk.type == TokenType.STORAGE_SPECIFIER) {
       if (_matchIn(2, TokenType.FUNCTION)) {
-        statement = parseFunctionDeclaration(metaAnnotations);
+        statement = parseFunctionDeclaration(metaAnnotations, template);
+        metaAnnotationsConsumed = true;
+        templateConsumed = true;
       } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
         statement = parseVariableDeclaration(metaAnnotations);
+        metaAnnotationsConsumed = true;
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
     } else if (tk.type == TokenType.EXECUTION_MODEL_SPECIFIER ||
         tk.type == TokenType.FUNCTION) {
-      statement = parseFunctionDeclaration(metaAnnotations);
+      statement = parseFunctionDeclaration(metaAnnotations, template);
+      metaAnnotationsConsumed = true;
+      templateConsumed = true;
     } else if (tk.type == TokenType.MUTABILITY_SPECIFIER) {
       statement = parseVariableDeclaration(metaAnnotations);
+      metaAnnotationsConsumed = true;
     } else if (tk.type == TokenType.IF) {
       statement = parseIfStatement();
     } else if (tk.type == TokenType.SWITCH) {
@@ -100,6 +126,16 @@ class Parser {
       statement = parseReturnStatement();
     } else {
       statement = parseExpressionStatement();
+    }
+
+    if (!metaAnnotationsConsumed && metaAnnotations != null) {
+      throw UnimplementedError(
+        "Meta-annotations are not allowed for ${statement.type} statements",
+      );
+    } else if (!templateConsumed && template != null) {
+      throw UnimplementedError(
+        "Template is not allowed for ${statement.type} statements",
+      );
     }
 
     return statement;
@@ -276,11 +312,26 @@ class Parser {
     List<FunctionDeclarationNode> methods = [];
 
     while (!_match(TokenType.RIGHT_BRACE)) {
-      final tk = _peek();
+      var tk = _peek();
+
+      MetaAnnotations? metaAnnotations;
+
+      if (tk.type == TokenType.LEFT_BRACKET &&
+          _matchIn(1, TokenType.ANNOTATION)) {
+        metaAnnotations = parseMetaAnnotations();
+      }
+
+      tk = _peek(); // Re-evaluate the token after parsing meta-annotations.
+
+      if (tk.type == TokenType.TEMPLATE) {
+        throw UnimplementedError(
+          "Templates are not allowed for interface methods",
+        );
+      }
 
       if (tk.type == TokenType.EXECUTION_MODEL_SPECIFIER ||
           tk.type == TokenType.FUNCTION) {
-        methods.add(parseFunctionDeclaration(metaAnnotations));
+        methods.add(parseFunctionDeclaration(metaAnnotations, null));
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -300,7 +351,7 @@ class Parser {
 
   /// See [InterfaceImplementationNode] for more information.
   @visibleForTesting
-  InterfaceImplementationNode parseInterfaceImplementationDeclaration(
+  InterfaceImplementationNode parseInterfaceImplementation(
     MetaAnnotations? metaAnnotations,
   ) {
     Token implementsKeyword = _advance(
@@ -332,12 +383,25 @@ class Parser {
     List<FunctionDeclarationNode> methods = [];
 
     while (!_match(TokenType.RIGHT_BRACE)) {
-      final tk = _peek();
+      var tk = _peek();
+
+      if (tk.type == TokenType.LEFT_BRACKET &&
+          _matchIn(1, TokenType.ANNOTATION)) {
+        throw UnimplementedError(
+          "Annotations can't be overriden for interface methods",
+        );
+      }
+
+      if (tk.type == TokenType.TEMPLATE) {
+        throw UnimplementedError(
+          "Templates are not allowed for interface methods",
+        );
+      }
 
       if (tk.type == TokenType.STORAGE_SPECIFIER ||
           tk.type == TokenType.EXECUTION_MODEL_SPECIFIER ||
           tk.type == TokenType.FUNCTION) {
-        methods.add(parseFunctionDeclaration(metaAnnotations));
+        methods.add(parseFunctionDeclaration(null, null));
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -360,7 +424,10 @@ class Parser {
 
   /// See [ClassDeclarationNode] for more information.
   @visibleForTesting
-  ClassDeclarationNode parseClassDeclaration(MetaAnnotations? metaAnnotations) {
+  ClassDeclarationNode parseClassDeclaration(
+    MetaAnnotations? metaAnnotations,
+    Template? template,
+  ) {
     Token? partialKeyword;
 
     if (_match(TokenType.PARTIAL)) {
@@ -392,6 +459,7 @@ class Parser {
       var tk = _peek();
 
       MetaAnnotations? metaAnnotations;
+      bool metaAnnotationsConsumed = false;
 
       if (tk.type == TokenType.LEFT_BRACKET &&
           _matchIn(1, TokenType.ANNOTATION)) {
@@ -400,34 +468,62 @@ class Parser {
 
       tk = _peek(); // Re-evaluate the token after parsing meta annotations.
 
+      Template? template;
+      bool templateConsumed = false;
+
+      if (tk.type == TokenType.TEMPLATE) {
+        template = parseTemplate();
+      }
+
+      tk = _peek(); // Re-evaluate the token after parsing template.
+
       if (tk.type == TokenType.CONSTRUCTOR) {
         if (constructor != null) {
           throw UnimplementedError("Multiple constructors are not allowed");
         } else {
           constructor = parseConstructorDeclaration(metaAnnotations);
+          metaAnnotationsConsumed = true;
         }
       } else if (tk.type == TokenType.DESTRUCTOR) {
         if (destructor != null) {
           throw UnimplementedError("Multiple destructors are not allowed");
         } else {
           destructor = parseDestructorDeclaration(metaAnnotations);
+          metaAnnotationsConsumed = true;
         }
       } // NOTE: Function and variable declarations require arbitrary lookahead for disambiguation.
       else if (tk.type == TokenType.STORAGE_SPECIFIER) {
         if (_matchIn(2, TokenType.FUNCTION)) {
-          methods.add(parseFunctionDeclaration(metaAnnotations));
+          methods.add(parseFunctionDeclaration(metaAnnotations, template));
+          metaAnnotationsConsumed = true;
+          templateConsumed = true;
         } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
           fields.add(parseVariableDeclaration(metaAnnotations));
+          metaAnnotationsConsumed = true;
         }
       } else if (tk.type == TokenType.UNION) {
         unions.add(parseUnionDeclaration(metaAnnotations));
+        metaAnnotationsConsumed = true;
       } else if (tk.type == TokenType.EXECUTION_MODEL_SPECIFIER ||
           tk.type == TokenType.FUNCTION) {
-        methods.add(parseFunctionDeclaration(metaAnnotations));
+        methods.add(parseFunctionDeclaration(metaAnnotations, template));
+        metaAnnotationsConsumed = true;
+        templateConsumed = true;
       } else if (tk.type == TokenType.MUTABILITY_SPECIFIER) {
         fields.add(parseVariableDeclaration(metaAnnotations));
+        metaAnnotationsConsumed = true;
       } else {
         throw UnimplementedError("Unexpected token: $tk");
+      }
+
+      if (!metaAnnotationsConsumed && metaAnnotations != null) {
+        throw UnimplementedError(
+          "Meta-annotations are not allowed for ${tk.type} statements",
+        );
+      } else if (!templateConsumed && template != null) {
+        throw UnimplementedError(
+          "Template is not allowed for ${tk.type} statements",
+        );
       }
     }
 
@@ -438,6 +534,7 @@ class Parser {
 
     return ClassDeclarationNode(
       metaAnnotations: metaAnnotations,
+      template: template,
       partialKeyword: partialKeyword,
       classKeyword: classKeyword,
       name: IdentifierNode(name: name),
@@ -453,6 +550,7 @@ class Parser {
   @visibleForTesting
   StructDeclarationNode parseStructDeclaration(
     MetaAnnotations? metaAnnotations,
+    Template? template,
   ) {
     Token structKeyword = _advance(
       TokenType.STRUCT,
@@ -515,6 +613,7 @@ class Parser {
 
     return StructDeclarationNode(
       metaAnnotations: metaAnnotations,
+      template: template,
       structKeyword: structKeyword,
       name: IdentifierNode(name: name),
       constructor: constructor,
@@ -666,6 +765,7 @@ class Parser {
   @visibleForTesting
   FunctionDeclarationNode parseFunctionDeclaration(
     MetaAnnotations? metaAnnotations,
+    Template? template,
   ) {
     Token? storageSpecifier;
 
@@ -705,6 +805,7 @@ class Parser {
 
     return FunctionDeclarationNode(
       metaAnnotations: metaAnnotations,
+      template: template,
       storageSpecifier: storageSpecifier,
       executionModelSpecifier: executionModelSpecifier,
       functionKeyword: functionKeyword,
@@ -1712,6 +1813,27 @@ class Parser {
     );
 
     return MetaAnnotations(leftBracket: leftBracket, annotations: annotations);
+  }
+
+  @visibleForTesting
+  Template parseTemplate() {
+    final templateKeyword = _advance(
+      TokenType.TEMPLATE,
+      message: "Expected 'template' keyword, instead got ${_peek()}",
+    );
+
+    final parameters = parseList(
+      {TokenType.LESS},
+      {TokenType.GREATER},
+      TokenType.COMMA,
+      () => _advance(
+        TokenType.IDENTIFIER,
+        message:
+            "Expected identifier for template parameter, instead got ${_peek()}",
+      ),
+    );
+
+    return Template(templateKeyword: templateKeyword, parameters: parameters);
   }
 
   @visibleForTesting

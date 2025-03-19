@@ -1,4 +1,5 @@
 import 'package:compiler/src/shared/ast/meta_annotations.dart';
+import 'package:compiler/src/shared/ast/templates.dart';
 
 import '../../shared/token_definitions.dart';
 
@@ -263,6 +264,7 @@ class InterfaceImplementationNode extends StatementNode {
 /// methods: A list of methods in the class.
 class ClassDeclarationNode extends StatementNode {
   final MetaAnnotations? metaAnnotations;
+  final Template? template;
   final Token? partialKeyword;
   final Token classKeyword;
   final IdentifierNode name;
@@ -274,6 +276,7 @@ class ClassDeclarationNode extends StatementNode {
 
   const ClassDeclarationNode({
     this.metaAnnotations,
+    this.template,
     this.partialKeyword,
     required this.classKeyword,
     required this.name,
@@ -289,6 +292,7 @@ class ClassDeclarationNode extends StatementNode {
     return {
       'type': type.toString(),
       if (metaAnnotations != null) 'metaAnnotations': metaAnnotations!.toJson(),
+      if (template != null) 'template': template!.toJson(),
       if (partialKeyword != null) 'partialKeyword': partialKeyword!.lexeme,
       'classKeyword': classKeyword.lexeme,
       'name': name.toJson(),
@@ -303,6 +307,7 @@ class ClassDeclarationNode extends StatementNode {
   @override
   List<Object?> get props => [
     metaAnnotations,
+    template,
     partialKeyword,
     classKeyword,
     name,
@@ -331,6 +336,7 @@ class ClassDeclarationNode extends StatementNode {
 /// constructor: An optional constructor for the struct.
 class StructDeclarationNode extends StatementNode {
   final MetaAnnotations? metaAnnotations;
+  final Template? template;
   final Token structKeyword;
   final IdentifierNode name;
   final ConstructorDeclarationNode? constructor;
@@ -340,6 +346,7 @@ class StructDeclarationNode extends StatementNode {
 
   const StructDeclarationNode({
     this.metaAnnotations,
+    this.template,
     required this.structKeyword,
     required this.name,
     this.constructor,
@@ -353,6 +360,7 @@ class StructDeclarationNode extends StatementNode {
     return {
       'type': type.toString(),
       if (metaAnnotations != null) 'metaAnnotations': metaAnnotations!.toJson(),
+      if (template != null) 'template': template!.toJson(),
       'structKeyword': structKeyword.lexeme,
       'name': name.toJson(),
       if (constructor != null) 'constructor': constructor!.toJson(),
@@ -365,6 +373,7 @@ class StructDeclarationNode extends StatementNode {
   @override
   List<Object?> get props => [
     metaAnnotations,
+    template,
     structKeyword,
     name,
     constructor,
@@ -496,6 +505,7 @@ class DestructorDeclarationNode extends StatementNode {
 /// body: The body of the function.
 class FunctionDeclarationNode extends StatementNode {
   final MetaAnnotations? metaAnnotations;
+  final Template? template;
   final Token? storageSpecifier;
   final Token? executionModelSpecifier;
   final Token functionKeyword;
@@ -506,6 +516,7 @@ class FunctionDeclarationNode extends StatementNode {
 
   const FunctionDeclarationNode({
     this.metaAnnotations,
+    this.template,
     this.storageSpecifier,
     this.executionModelSpecifier,
     required this.functionKeyword,
@@ -520,6 +531,7 @@ class FunctionDeclarationNode extends StatementNode {
     return {
       'type': type.toString(),
       if (metaAnnotations != null) 'metaAnnotations': metaAnnotations!.toJson(),
+      if (template != null) 'template': template!.toJson(),
       if (storageSpecifier != null)
         'storageSpecifier': storageSpecifier!.lexeme,
       if (executionModelSpecifier != null)
@@ -535,6 +547,7 @@ class FunctionDeclarationNode extends StatementNode {
   @override
   List<Object?> get props => [
     metaAnnotations,
+    template,
     storageSpecifier,
     executionModelSpecifier,
     functionKeyword,
