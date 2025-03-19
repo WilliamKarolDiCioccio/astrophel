@@ -90,6 +90,9 @@ enum TokenType {
   CONSTRUCTOR,
   DESTRUCTOR,
 
+  // Templates
+  TEMPLATE,
+
   // RTTI
   TYPEINFO,
 

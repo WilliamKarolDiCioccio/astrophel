@@ -545,6 +545,9 @@ class Lexer {
     'constructor': TokenType.CONSTRUCTOR,
     'destructor': TokenType.DESTRUCTOR,
 
+    // Templates
+    'template': TokenType.TEMPLATE,
+
     // RTTI
     'typeinfo': TokenType.TYPEINFO,
 

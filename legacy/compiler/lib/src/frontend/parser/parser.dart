@@ -1722,18 +1722,33 @@ class Parser {
           "Expected identifier for type annotation, instead got ${_peek()}",
     );
 
-    List<Token>? genericArguments;
+    List<TypeAnnotation>? templateArguments;
 
     if (_match(TokenType.LESS)) {
-      genericArguments = parseList(
+      templateArguments = parseList(
         {TokenType.LESS},
         {TokenType.GREATER},
         TokenType.COMMA,
-        () => _advance(
-          TokenType.IDENTIFIER,
-          message:
-              "Expected identifier for type argument, instead got ${_peek()}",
+        () => parseTypeAnnotation(),
+      );
+    }
+
+    NumericLiteralNode? size;
+
+    if (_match(TokenType.LEFT_BRACKET)) {
+      _advance(null); // Consume the left bracket token
+
+      size = NumericLiteralNode(
+        value: _advance(
+          TokenType.NUMBER,
+          message: "Expected number for array size, instead got ${_peek()}",
         ),
+      );
+
+      _advance(
+        TokenType.RIGHT_BRACKET,
+        message:
+            "Expected right bracket for array size, instead got ${_peek()}",
       );
     }
 
@@ -1743,11 +1758,20 @@ class Parser {
       pointer = _advance(null); // Consume the star token
     }
 
-    return TypeAnnotation(
-      name: name,
-      genericArguments: genericArguments,
-      pointer: pointer,
-    );
+    if (size != null) {
+      return ArrayTypeAnnotation(
+        name: name,
+        templateArguments: templateArguments,
+        size: size,
+        pointer: pointer,
+      );
+    } else {
+      return TypeAnnotation(
+        name: name,
+        templateArguments: templateArguments,
+        pointer: pointer,
+      );
+    }
   }
 
   /// Consumes the next token in the stream and returns it.
