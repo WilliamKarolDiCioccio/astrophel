@@ -1892,7 +1892,7 @@ class Parser {
     NumericLiteralNode? size;
 
     if (_match(TokenType.LEFT_BRACKET)) {
-      _advance(null); // Consume the left bracket token
+      leftBracket = _advance(null); // Consume the left bracket token
 
       size = NumericLiteralNode(
         value: _advance(
