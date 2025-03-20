@@ -2,8 +2,8 @@
 
 import 'package:meta/meta.dart';
 
-import '../../shared/token_definitions.dart';
-export '../../shared/token_definitions.dart';
+import '../../shared/tokens/token.dart';
+export '../../shared/tokens/token.dart';
 
 /// The lexer scans the source code and produces a sequence of tokens. It runs on a per-file basis.
 ///

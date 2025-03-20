@@ -2,14 +2,16 @@
 
 import 'package:compiler/src/shared/ast/definitions.dart';
 
-import '../token_definitions.dart';
+import '../tokens/definitions.dart';
 
 /// Base class for type annotations.
 class TypeAnnotation {
-  const TypeAnnotation();
+  final ASTType type;
+
+  const TypeAnnotation(this.type);
 
   Map<String, dynamic> toJson() {
-    return {'type': 'TypeAnnotation'};
+    return {'type': type.toString()};
   }
 
   List<Object?> get props => [];
@@ -29,12 +31,13 @@ class AtomicTypeAnnotation extends TypeAnnotation {
   final List<TypeAnnotation>? templateArguments;
   final Token? pointer;
 
-  const AtomicTypeAnnotation({this.name, this.templateArguments, this.pointer});
+  const AtomicTypeAnnotation({this.name, this.templateArguments, this.pointer})
+    : super(ASTType.atomicTypeAnnotation);
 
   @override
   Map<String, dynamic> toJson() {
     return {
-      'type': 'AtomicTypeAnnotation',
+      'type': type.toString(),
       if (name != null) 'name': name!.lexeme,
       if (templateArguments != null)
         'templateArguments': templateArguments!.map((a) => a.toJson()).toList(),
@@ -52,16 +55,22 @@ class AtomicTypeAnnotation extends TypeAnnotation {
 ///
 /// size: The size of the array.
 class ArrayTypeAnnotation extends TypeAnnotation {
+  final Token leftBracket;
   final AtomicTypeAnnotation? name;
   final NumericLiteralNode size;
 
-  const ArrayTypeAnnotation({required this.name, required this.size});
+  const ArrayTypeAnnotation({
+    required this.leftBracket,
+    required this.name,
+    required this.size,
+  }) : super(ASTType.arrayTypeAnnotation);
 
   @override
   Map<String, dynamic> toJson() {
     return {
-      'type': 'ArrayTypeAnnotation',
+      'type': type.toString(),
       'name': name!.toJson(),
+      'leftBracket': leftBracket.lexeme,
       'size': size.toJson(),
     };
   }
@@ -76,19 +85,26 @@ class ArrayTypeAnnotation extends TypeAnnotation {
 ///
 /// elements: The elements of the tuple.
 class TupleTypeAnnotation extends TypeAnnotation {
+  final Token leftBrace;
   final List<TypeAnnotation> elements;
   final Token? pointer;
 
-  const TupleTypeAnnotation({required this.elements, this.pointer});
+  const TupleTypeAnnotation({
+    required this.leftBrace,
+    required this.elements,
+    this.pointer,
+  }) : super(ASTType.tupleTypeAnnotation);
 
   @override
   Map<String, dynamic> toJson() {
     return {
-      'type': 'TupleTypeAnnotation',
+      'type': type.toString(),
+      'leftBrace': leftBrace.lexeme,
       'elements': elements.map((e) => e.toJson()).toList(),
+      if (pointer != null) 'pointer': pointer!.lexeme,
     };
   }
 
   @override
-  List<Object?> get props => [elements];
+  List<Object?> get props => [elements, pointer];
 }

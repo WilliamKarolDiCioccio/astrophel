@@ -1,11 +1,30 @@
-import 'package:compiler/src/shared/ast/templates.dart';
+import 'dart:convert';
 
-import '../../shared/ast/definitions.dart';
-import '../../shared/ast/meta_annotations.dart';
-import '../../shared/ast/type_annotations.dart';
-import '../../shared/token_definitions.dart';
+import 'package:compiler/src/shared/ast/definitions.dart';
+import 'package:equatable/equatable.dart';
+import 'package:meta/meta.dart';
 
-// The declarations appear in an intuitive order as statements don't really have a parsing precedence.
+import '../tokens/definitions.dart';
+
+// NOTE: I'm not using the `interface` keyword here because Dart doesn't allow for
+// extending classes with `interface` outside of the same library.
+
+/// Base class for all AST statement nodes.
+///
+/// This class is used to represent a statement in the AST. A statement is a
+/// single instruction that performs an action. For example, a variable
+/// declaration, a function declaration, or an if statement.
+@immutable
+abstract class StatementNode extends Equatable {
+  final ASTType type;
+
+  const StatementNode(this.type);
+
+  Map<String, dynamic> toJson();
+
+  @override
+  String toString() => JsonEncoder.withIndent('  ').convert(toJson());
+}
 
 typedef MethodDeclarationNode = FunctionDeclarationNode;
 typedef FieldDeclarationNode = MultiVariableDeclarationNode;
@@ -66,7 +85,7 @@ class ImportStatementNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [importKeyword, mimePath, alias];
+  List<Object?> get props => [mimePath, alias];
 }
 
 /// Represents a symbol import.
@@ -125,12 +144,7 @@ final class SymbolWiseImportStatementNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [
-    fromKeyword,
-    mimePath,
-    importKeyword,
-    symbolImports,
-  ];
+  List<Object?> get props => [mimePath, symbolImports];
 }
 
 /// Represents an export statement.
@@ -274,13 +288,13 @@ class ClassDeclarationNode extends StatementNode {
   final List<UnionDeclarationNode> unions;
 
   const ClassDeclarationNode({
-    this.metaAnnotations,
-    this.template,
-    this.partialKeyword,
+    required this.metaAnnotations,
+    required this.template,
+    required this.partialKeyword,
     required this.classKeyword,
     required this.name,
-    this.constructor,
-    this.destructor,
+    required this.constructor,
+    required this.destructor,
     required this.fields,
     required this.methods,
     required this.unions,
@@ -307,8 +321,6 @@ class ClassDeclarationNode extends StatementNode {
   List<Object?> get props => [
     metaAnnotations,
     template,
-    partialKeyword,
-    classKeyword,
     name,
     constructor,
     destructor,
@@ -344,12 +356,12 @@ class StructDeclarationNode extends StatementNode {
   final List<UnionDeclarationNode> unions;
 
   const StructDeclarationNode({
-    this.metaAnnotations,
-    this.template,
+    required this.metaAnnotations,
+    required this.template,
     required this.structKeyword,
     required this.name,
-    this.constructor,
-    this.destructor,
+    required this.constructor,
+    required this.destructor,
     required this.fields,
     required this.unions,
   }) : super(ASTType.structDeclaration);
@@ -392,28 +404,23 @@ class StructDeclarationNode extends StatementNode {
 /// unionKeyword: The "union" keyword.
 /// fields: A list of fields in the union.
 class UnionDeclarationNode extends StatementNode {
-  final MetaAnnotations? metaAnnotations;
   final Token unionKeyword;
   final List<FieldDeclarationNode> fields;
 
-  const UnionDeclarationNode({
-    this.metaAnnotations,
-    required this.unionKeyword,
-    required this.fields,
-  }) : super(ASTType.unionDeclaration);
+  const UnionDeclarationNode({required this.unionKeyword, required this.fields})
+    : super(ASTType.unionDeclaration);
 
   @override
   Map<String, dynamic> toJson() {
     return {
       'type': type.toString(),
-      if (metaAnnotations != null) 'metaAnnotations': metaAnnotations!.toJson(),
       'unionKeyword': unionKeyword.lexeme,
       'fields': fields.map((f) => f.toJson()).toList(),
     };
   }
 
   @override
-  List<Object?> get props => [metaAnnotations, unionKeyword, fields];
+  List<Object?> get props => [unionKeyword, fields];
 }
 
 /// Represents a constructor declaration for a class or struct.
@@ -432,7 +439,7 @@ class ConstructorDeclarationNode extends StatementNode {
   final BlockStatementNode body;
 
   const ConstructorDeclarationNode({
-    this.metaAnnotations,
+    required this.metaAnnotations,
     required this.constructorKeyword,
     required this.initializers,
     required this.parameters,
@@ -452,12 +459,7 @@ class ConstructorDeclarationNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [
-    constructorKeyword,
-    parameters,
-    initializers,
-    body,
-  ];
+  List<Object?> get props => [parameters, initializers, body];
 }
 
 /// Represents a destructor declaration for a class or struct.
@@ -472,7 +474,7 @@ class DestructorDeclarationNode extends StatementNode {
   final BlockStatementNode body;
 
   const DestructorDeclarationNode({
-    this.metaAnnotations,
+    required this.metaAnnotations,
     required this.destructorKeyword,
     required this.body,
   }) : super(ASTType.destructorDeclaration);
@@ -488,7 +490,7 @@ class DestructorDeclarationNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [destructorKeyword, body];
+  List<Object?> get props => [body];
 }
 
 /// Represents a function declaration.
@@ -515,14 +517,14 @@ class FunctionDeclarationNode extends StatementNode {
   final BlockStatementNode body;
 
   const FunctionDeclarationNode({
-    this.metaAnnotations,
-    this.template,
-    this.storageSpecifier,
-    this.executionModelSpecifier,
+    required this.metaAnnotations,
+    required this.template,
+    required this.storageSpecifier,
+    required this.executionModelSpecifier,
     required this.functionKeyword,
     required this.name,
     required this.parameters,
-    this.returnType,
+    required this.returnType,
     required this.body,
   }) : super(ASTType.functionDeclaration);
 
@@ -550,7 +552,6 @@ class FunctionDeclarationNode extends StatementNode {
     template,
     storageSpecifier,
     executionModelSpecifier,
-    functionKeyword,
     name,
     parameters,
     returnType,
@@ -575,9 +576,9 @@ class MultiVariableDeclarationNode extends StatementNode {
   final List<(IdentifierNode, ExpressionNode?)> nameInitializerPairs;
 
   const MultiVariableDeclarationNode({
-    this.storageSpecifier,
-    this.mutabilitySpecifier,
-    this.typeAnnotation,
+    required this.storageSpecifier,
+    required this.mutabilitySpecifier,
+    required this.typeAnnotation,
     required this.nameInitializerPairs,
   }) : super(ASTType.variableDeclaration);
 
@@ -914,7 +915,7 @@ class BreakStatementNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [breakKeyword];
+  List<Object?> get props => [];
 }
 
 /// Represents a continue statement.
@@ -930,7 +931,7 @@ class ContinueStatementNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [continueKeyword];
+  List<Object?> get props => [];
 }
 
 /// Represents a return statement.
@@ -960,7 +961,7 @@ class ReturnStatementNode extends StatementNode {
   }
 
   @override
-  List<Object?> get props => [returnKeyword, expression];
+  List<Object?> get props => [expression];
 }
 
 /// Represents a function parameter.

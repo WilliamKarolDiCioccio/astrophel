@@ -1,6 +1,13 @@
+import 'package:meta/meta.dart';
+
 import '../../shared/ast/definitions.dart';
-import '../../shared/ast/type_annotations.dart';
-import '../../shared/token_definitions.dart';
+import '../tokens/definitions.dart';
+
+/// evaluated to produce a result. Expressions are a subset of statements.
+@immutable
+abstract class ExpressionNode extends StatementNode {
+  const ExpressionNode(super.type);
+}
 
 /// captures: The variables captured by the lambda expression.
 /// parameters: The parameters of the lambda expression.
@@ -24,10 +31,11 @@ class LambdaExpressionNode extends ExpressionNode {
   Map<String, dynamic> toJson() {
     return {
       'type': type.toString(),
-      'executionModelSpecifier': executionModelSpecifier?.lexeme,
+      if (executionModelSpecifier != null)
+        'executionModelSpecifier': executionModelSpecifier!.lexeme,
       'lambdaKeyword': lambdaKeyword.lexeme,
       'parameters': parameters.map((param) => param.toJson()).toList(),
-      'returnType': returnType?.toJson(),
+      if (returnType != null) 'returnType': returnType!.toJson(),
       'body': body.toJson(),
     };
   }

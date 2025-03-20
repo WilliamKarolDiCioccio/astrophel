@@ -1,6 +1,6 @@
 // ignore_for_file: unintended_html_in_doc_comment
 
-import '../token_definitions.dart';
+import '../tokens/definitions.dart';
 
 /// Represents a template.
 ///

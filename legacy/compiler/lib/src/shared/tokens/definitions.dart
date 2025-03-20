@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+export 'token.dart';
+
 // We ignore a few naming convention warnings because some lowercase names would conflict with dart's itself keywords.
 enum TokenType {
   // Single-character tokens
@@ -119,32 +121,4 @@ enum TokenType {
 
   // Utility
   EOF,
-}
-
-/// Represents a token in the source code.
-///
-/// Tokens are the smallest meaningful units in a programming language.
-/// The lexer scans the source code and produces a sequence of tokens.
-/// Each token has a type, lexeme (the actual text in the source), and a literal value.
-///
-/// The [line] field is used for error reporting and debugging.
-class Token {
-  final TokenType type;
-  final String lexeme;
-  final dynamic literal;
-  final int line;
-  final int column;
-
-  Token(this.type, this.lexeme, this.literal, this.line, this.column);
-
-  Map<String, dynamic> toJson() => {
-    'type': type.toString(),
-    'lexeme': lexeme,
-    'literal': literal,
-    'line': line,
-    'column': column,
-  };
-
-  @override
-  String toString() => toJson().toString();
 }

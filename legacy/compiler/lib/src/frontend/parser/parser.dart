@@ -1,10 +1,7 @@
-import 'package:compiler/src/shared/ast/templates.dart';
 import 'package:meta/meta.dart';
 
 import '../../shared/ast/definitions.dart';
-import '../../shared/ast/meta_annotations.dart';
-import '../../shared/ast/type_annotations.dart';
-import '../../shared/token_definitions.dart';
+import '../../shared/tokens/token.dart';
 
 /// The parser class is responsible for converting a list of tokens into an AST. It runs on a per-file basis.
 class Parser {
@@ -79,8 +76,7 @@ class Parser {
       metaAnnotationsConsumed = true;
       templateConsumed = true;
     } else if (tk.type == TokenType.UNION) {
-      statement = parseUnionDeclaration(metaAnnotations);
-      metaAnnotationsConsumed = true;
+      statement = parseUnionDeclaration();
     } else if (tk.type == TokenType.ENUM) {
       statement = parseEnumDeclaration(metaAnnotations);
       metaAnnotationsConsumed = true;
@@ -95,8 +91,7 @@ class Parser {
         metaAnnotationsConsumed = true;
         templateConsumed = true;
       } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
-        statement = parseMultiVariableDeclaration(metaAnnotations);
-        metaAnnotationsConsumed = true;
+        statement = parseMultiVariableDeclaration();
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -106,8 +101,7 @@ class Parser {
       metaAnnotationsConsumed = true;
       templateConsumed = true;
     } else if (tk.type == TokenType.MUTABILITY_SPECIFIER) {
-      statement = parseMultiVariableDeclaration(metaAnnotations);
-      metaAnnotationsConsumed = true;
+      statement = parseMultiVariableDeclaration();
     } else if (tk.type == TokenType.IF) {
       statement = parseIfStatement();
     } else if (tk.type == TokenType.SWITCH) {
@@ -498,11 +492,10 @@ class Parser {
           metaAnnotationsConsumed = true;
           templateConsumed = true;
         } else if (_matchIn(1, TokenType.MUTABILITY_SPECIFIER)) {
-          fields.add(parseMultiVariableDeclaration(metaAnnotations));
-          metaAnnotationsConsumed = true;
+          fields.add(parseMultiVariableDeclaration());
         }
       } else if (tk.type == TokenType.UNION) {
-        unions.add(parseUnionDeclaration(metaAnnotations));
+        unions.add(parseUnionDeclaration());
         metaAnnotationsConsumed = true;
       } else if (tk.type == TokenType.EXECUTION_MODEL_SPECIFIER ||
           tk.type == TokenType.FUNCTION) {
@@ -510,8 +503,7 @@ class Parser {
         metaAnnotationsConsumed = true;
         templateConsumed = true;
       } else if (tk.type == TokenType.MUTABILITY_SPECIFIER) {
-        fields.add(parseMultiVariableDeclaration(metaAnnotations));
-        metaAnnotationsConsumed = true;
+        fields.add(parseMultiVariableDeclaration());
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -597,12 +589,18 @@ class Parser {
 
         destructor = parseDestructorDeclaration(metaAnnotations);
       } else if (tk.type == TokenType.UNION) {
-        unions.add(parseUnionDeclaration(metaAnnotations));
+        unions.add(parseUnionDeclaration());
       } else if (tk.type == TokenType.STORAGE_SPECIFIER ||
           tk.type == TokenType.MUTABILITY_SPECIFIER) {
-        fields.add(parseMultiVariableDeclaration(metaAnnotations));
+        fields.add(parseMultiVariableDeclaration());
       } else {
         throw UnimplementedError("Unexpected token: $tk");
+      }
+
+      if (metaAnnotations != null) {
+        throw UnimplementedError(
+          "Meta-annotations are not allowed for ${tk.type} statements",
+        );
       }
     }
 
@@ -625,7 +623,7 @@ class Parser {
 
   /// See [UnionDeclarationNode] for more information.
   @visibleForTesting
-  UnionDeclarationNode parseUnionDeclaration(MetaAnnotations? metaAnnotations) {
+  UnionDeclarationNode parseUnionDeclaration() {
     Token unionKeyword = _advance(
       TokenType.UNION,
       message: "Expected 'union' keyword, instead got ${_peek()}",
@@ -643,7 +641,7 @@ class Parser {
 
       if (tk.type == TokenType.STORAGE_SPECIFIER ||
           tk.type == TokenType.MUTABILITY_SPECIFIER) {
-        fields.add(parseMultiVariableDeclaration(metaAnnotations));
+        fields.add(parseMultiVariableDeclaration());
       } else {
         throw UnimplementedError("Unexpected token: $tk");
       }
@@ -654,11 +652,7 @@ class Parser {
       message: "Expected '}' for union declaration, instead got ${_peek()}",
     );
 
-    return UnionDeclarationNode(
-      metaAnnotations: metaAnnotations,
-      unionKeyword: unionKeyword,
-      fields: fields,
-    );
+    return UnionDeclarationNode(unionKeyword: unionKeyword, fields: fields);
   }
 
   /// See [EnumDeclarationNode] for more information.
@@ -724,6 +718,7 @@ class Parser {
     final body = parseBlock();
 
     return ConstructorDeclarationNode(
+      metaAnnotations: metaAnnotations,
       constructorKeyword: constructorKeyword,
       parameters: parameters,
       initializers: initializers,
@@ -756,6 +751,7 @@ class Parser {
     final body = parseBlock();
 
     return DestructorDeclarationNode(
+      metaAnnotations: metaAnnotations,
       destructorKeyword: destructorKeyword,
       body: body,
     );
@@ -818,9 +814,7 @@ class Parser {
 
   /// See [ParameterNode] for more information.
   @visibleForTesting
-  MultiVariableDeclarationNode parseMultiVariableDeclaration(
-    MetaAnnotations? metaAnnotations,
-  ) {
+  MultiVariableDeclarationNode parseMultiVariableDeclaration() {
     Token? storageSpecifier;
 
     if (_match(TokenType.STORAGE_SPECIFIER)) {
@@ -1855,6 +1849,8 @@ class Parser {
   @visibleForTesting
   TypeAnnotation parseTypeAnnotation() {
     if (_match(TokenType.LEFT_BRACE)) {
+      final leftBrace = _peek(); // Already consumed by parseList
+
       final elements = parseList(
         {TokenType.LEFT_BRACE},
         {TokenType.RIGHT_BRACE},
@@ -1868,7 +1864,11 @@ class Parser {
         pointer = _advance(null); // Consume the star token
       }
 
-      return TupleTypeAnnotation(elements: elements, pointer: pointer);
+      return TupleTypeAnnotation(
+        leftBrace: leftBrace,
+        elements: elements,
+        pointer: pointer,
+      );
     }
 
     final name = _advance(
@@ -1888,6 +1888,7 @@ class Parser {
       );
     }
 
+    Token? leftBracket;
     NumericLiteralNode? size;
 
     if (_match(TokenType.LEFT_BRACKET)) {
@@ -1920,6 +1921,7 @@ class Parser {
           templateArguments: templateArguments,
           pointer: pointer,
         ),
+        leftBracket: leftBracket!, // Ensured to be non-null by the grammar
         size: size,
       );
     } else {
