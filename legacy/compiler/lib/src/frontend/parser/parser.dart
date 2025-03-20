@@ -1551,21 +1551,6 @@ class Parser {
     return expression;
   }
 
-  /// See [GroupingExpressionNode] for more information.
-  @visibleForTesting
-  ExpressionNode parseGroupingExpression() {
-    final leftParen = _advance(null); // Consume the left parenthesis
-
-    final expression = parseExpression();
-
-    _advance(
-      TokenType.RIGHT_PAREN,
-      message: "Expected closing parenthesis, instead got ${_peek()}",
-    );
-
-    return GroupingExpressionNode(expression: expression, leftParen: leftParen);
-  }
-
   /// See [StringLiteralNode], [StringFragmentNode]
   /// or [StringInterpolationNode] for more information.
   @visibleForTesting
@@ -1635,6 +1620,44 @@ class Parser {
     return StringInterpolationNode(fragments: fragments);
   }
 
+  /// See [GroupingExpressionNode] for more information.
+  @visibleForTesting
+  ExpressionNode parseGroupingOrTupleLiteralExpression() {
+    final oldCurrent = current;
+
+    final leftParen = _advance(null); // Consume the left parenthesis
+
+    final expression = parseExpression();
+
+    if (_match(TokenType.COMMA)) {
+      current = oldCurrent;
+
+      return parseTupleLiteralExpression();
+    }
+
+    _advance(
+      TokenType.RIGHT_PAREN,
+      message: "Expected closing parenthesis, instead got ${_peek()}",
+    );
+
+    return GroupingExpressionNode(expression: expression, leftParen: leftParen);
+  }
+
+  /// See [TupleLiteralNode] for more information.
+  @visibleForTesting
+  ExpressionNode parseTupleLiteralExpression() {
+    final leftParen = _peek(); // Already consumed by parseList
+
+    final elements = parseList(
+      {TokenType.LEFT_PAREN},
+      {TokenType.RIGHT_PAREN},
+      TokenType.COMMA,
+      parseExpression,
+    );
+
+    return TupleLiteralNode(leftParen: leftParen, elements: elements);
+  }
+
   /// See [ArrayLiteralNode] for more information.
   @visibleForTesting
   ExpressionNode parseArrayLiteralExpression() {
@@ -1648,21 +1671,6 @@ class Parser {
     );
 
     return ArrayLiteralNode(leftBracket: leftBracket, elements: elements);
-  }
-
-  /// See [TupleLiteralNode] for more information.
-  @visibleForTesting
-  ExpressionNode parseTupleLiteralExpression() {
-    final leftBrace = _peek(); // Already consumed by parseList
-
-    final elements = parseList(
-      {TokenType.LEFT_BRACE},
-      {TokenType.RIGHT_BRACE},
-      TokenType.COMMA,
-      parseExpression,
-    );
-
-    return TupleLiteralNode(leftBrace: leftBrace, elements: elements);
   }
 
   /// Primary expressions parsing entry point.
@@ -1685,13 +1693,10 @@ class Parser {
         expression = parseFragmentOrInterpolationExpression();
         break;
       case TokenType.LEFT_PAREN:
-        expression = parseGroupingExpression();
+        expression = parseGroupingOrTupleLiteralExpression();
         break;
       case TokenType.LEFT_BRACKET:
         expression = parseArrayLiteralExpression();
-        break;
-      case TokenType.LEFT_BRACE:
-        expression = parseTupleLiteralExpression();
         break;
       case TokenType.IDENTIFIER:
         expression = IdentifierNode(name: tk);
@@ -1848,12 +1853,12 @@ class Parser {
 
   @visibleForTesting
   TypeAnnotation parseTypeAnnotation() {
-    if (_match(TokenType.LEFT_BRACE)) {
-      final leftBrace = _peek(); // Already consumed by parseList
+    if (_match(TokenType.LEFT_PAREN)) {
+      final leftParen = _peek(); // Already consumed by parseList
 
       final elements = parseList(
-        {TokenType.LEFT_BRACE},
-        {TokenType.RIGHT_BRACE},
+        {TokenType.LEFT_PAREN},
+        {TokenType.RIGHT_PAREN},
         TokenType.COMMA,
         parseTypeAnnotation,
       );
@@ -1865,7 +1870,7 @@ class Parser {
       }
 
       return TupleTypeAnnotation(
-        leftBrace: leftBrace,
+        leftParen: leftParen,
         elements: elements,
         pointer: pointer,
       );

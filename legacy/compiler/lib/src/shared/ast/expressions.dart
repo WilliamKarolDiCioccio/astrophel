@@ -401,10 +401,10 @@ class ArrayLiteralNode extends ExpressionNode {
 ///
 /// elements: The elements that make up the tuple.
 class TupleLiteralNode extends ExpressionNode {
-  final Token leftBrace;
+  final Token leftParen;
   final List<ExpressionNode> elements;
 
-  const TupleLiteralNode({required this.leftBrace, required this.elements})
+  const TupleLiteralNode({required this.leftParen, required this.elements})
     : super(ASTType.tupleLiteral);
 
   @override
@@ -412,12 +412,12 @@ class TupleLiteralNode extends ExpressionNode {
     return {
       'type': type.toString(),
       'elements': elements.map((element) => element.toJson()).toList(),
-      'leftBrace': leftBrace.lexeme,
+      'leftParen': leftParen.lexeme,
     };
   }
 
   @override
-  List<Object?> get props => [leftBrace, elements];
+  List<Object?> get props => [leftParen, elements];
 }
 
 /// Represents a grouping expression to manipulate precedence.
