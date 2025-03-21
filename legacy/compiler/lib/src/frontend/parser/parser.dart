@@ -1484,7 +1484,7 @@ class Parser {
   /// [UnaryExpressionNode] or [CallExpressionNode] for more information.
   @visibleForTesting
   ExpressionNode parsePostfixExpression() {
-    ExpressionNode expression = parsePrimaryExpression();
+    ExpressionNode expression = parseAllocationExpression();
 
     while (true) {
       if (_match(TokenType.DOT)) {
@@ -1549,6 +1549,72 @@ class Parser {
     }
 
     return expression;
+  }
+
+  /// See [AllocationExpressionNode] for more information.
+  @visibleForTesting
+  ExpressionNode parseAllocationExpression() {
+    final tk = _peek();
+
+    if (tk.type == TokenType.ALLOCATE) {
+      final allocateKeyword = _advance(null); // Consume the allocate token
+
+      final leftParen = _advance(
+        TokenType.LEFT_PAREN,
+        message:
+            "Expected '(' for allocation expression, instead got ${_peek()}",
+      );
+
+      final constructor = parseExpression();
+
+      _advance(
+        TokenType.RIGHT_PAREN,
+        message:
+            "Expected ')' for deallocation expression, instead got ${_peek()}",
+      );
+
+      return AllocationExpressionNode(
+        allocateKeyword: allocateKeyword,
+        leftParen: leftParen,
+        constructor: constructor,
+      );
+    }
+
+    return parseDeAllocationExpression();
+  }
+
+  /// See [DeAllocationExpressionNode] for more information.
+  @visibleForTesting
+  ExpressionNode parseDeAllocationExpression() {
+    final tk = _peek();
+    if (tk.type == TokenType.DEALLOCATE) {
+      final deallocateKeyword = _advance(
+        TokenType.DEALLOCATE,
+        message: "Expected 'deallocate' keyword, instead got ${_peek()}",
+      );
+
+      final leftParen = _advance(
+        TokenType.LEFT_PAREN,
+        message:
+            "Expected '(' for deallocation expression, instead got ${_peek()}",
+      );
+
+      final object = parseExpression();
+
+      _advance(
+        TokenType.RIGHT_PAREN,
+        message:
+            "Expected ')' for deallocation expression, instead got ${_peek()}",
+      );
+
+      return DeAllocationExpressionNode(
+        deallocateKeyword: deallocateKeyword,
+        leftParen: leftParen,
+        object: object,
+      );
+    }
+
+    return parsePrimaryExpression();
   }
 
   /// See [StringLiteralNode], [StringFragmentNode]

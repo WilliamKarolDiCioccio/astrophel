@@ -288,7 +288,69 @@ class CallExpressionNode extends ExpressionNode {
   }
 
   @override
-  List<Object?> get props => [callee, leftParen, arguments];
+  List<Object?> get props => [callee, arguments];
+}
+
+/// Represents an allocation expression.
+///
+/// allocateKeyword: The token representing the allocation keyword.
+/// leftParen: Token representing the opening parenthesis (used for error reporting).
+/// objectType: The type of the allocation.
+class AllocationExpressionNode extends ExpressionNode {
+  final Token allocateKeyword;
+  final Token leftParen;
+  final ExpressionNode constructor;
+
+  const AllocationExpressionNode({
+    required this.allocateKeyword,
+    required this.leftParen,
+    required this.constructor,
+  }) : super(ASTType.allocation);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.toString(),
+      'allocateKeyword': allocateKeyword.lexeme,
+      'leftParen': leftParen.lexeme,
+      'constructor': constructor.toJson(),
+    };
+  }
+
+  @override
+  List<Object?> get props => [constructor];
+}
+
+/// Represents a deallocation expression.
+///
+/// e.g. deallocate(object)
+///
+/// deallocateKeyword: The token representing the deallocation keyword.
+/// leftParen: Token representing the opening parenthesis (used for error reporting).
+/// object: The object to deallocate.
+class DeAllocationExpressionNode extends ExpressionNode {
+  final Token deallocateKeyword;
+  final Token leftParen;
+  final ExpressionNode object;
+
+  const DeAllocationExpressionNode({
+    required this.deallocateKeyword,
+    required this.leftParen,
+    required this.object,
+  }) : super(ASTType.deallocation);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.toString(),
+      'deallocateKeyword': deallocateKeyword.lexeme,
+      'leftParen': leftParen.lexeme,
+      'object': object.toJson(),
+    };
+  }
+
+  @override
+  List<Object?> get props => [object];
 }
 
 /// Represents a numeric literal.
@@ -392,7 +454,7 @@ class ArrayLiteralNode extends ExpressionNode {
   }
 
   @override
-  List<Object?> get props => [leftBracket, elements];
+  List<Object?> get props => [elements];
 }
 
 /// Represents a tuple literal.
@@ -417,7 +479,7 @@ class TupleLiteralNode extends ExpressionNode {
   }
 
   @override
-  List<Object?> get props => [leftParen, elements];
+  List<Object?> get props => [elements];
 }
 
 /// Represents a grouping expression to manipulate precedence.
