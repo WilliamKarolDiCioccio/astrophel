@@ -85,12 +85,12 @@ class ArrayTypeAnnotation extends TypeAnnotation {
 ///
 /// elements: The elements of the tuple.
 class TupleTypeAnnotation extends TypeAnnotation {
-  final Token leftBrace;
+  final Token leftParen;
   final List<TypeAnnotation> elements;
   final Token? pointer;
 
   const TupleTypeAnnotation({
-    required this.leftBrace,
+    required this.leftParen,
     required this.elements,
     this.pointer,
   }) : super(ASTType.tupleTypeAnnotation);
@@ -99,7 +99,7 @@ class TupleTypeAnnotation extends TypeAnnotation {
   Map<String, dynamic> toJson() {
     return {
       'type': type.toString(),
-      'leftBrace': leftBrace.lexeme,
+      'leftParen': leftParen.lexeme,
       'elements': elements.map((e) => e.toJson()).toList(),
       if (pointer != null) 'pointer': pointer!.lexeme,
     };
@@ -107,4 +107,36 @@ class TupleTypeAnnotation extends TypeAnnotation {
 
   @override
   List<Object?> get props => [elements, pointer];
+}
+
+/// Represents a function type annotation.
+///
+/// e.g. (i32, i32) -> i32, (i64, i64) -> i64, etc.
+///
+/// leftParen: The left parenthesis (used for error reporting).
+/// parameters: The parameters of the function.
+/// returnType: The return type of the function.
+class FunctionTypeAnnotation extends TypeAnnotation {
+  final Token leftParen;
+  final List<TypeAnnotation> parameters;
+  final TypeAnnotation returnType;
+
+  const FunctionTypeAnnotation({
+    required this.leftParen,
+    required this.parameters,
+    required this.returnType,
+  }) : super(ASTType.functionTypeAnnotation);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.toString(),
+      'leftParen': leftParen.lexeme,
+      'parameters': parameters.map((p) => p.toJson()).toList(),
+      'returnType': returnType.toJson(),
+    };
+  }
+
+  @override
+  List<Object?> get props => [parameters, returnType];
 }

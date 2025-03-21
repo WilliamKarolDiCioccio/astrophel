@@ -30,6 +30,7 @@ enum ASTType {
   atomicTypeAnnotation,
   arrayTypeAnnotation,
   tupleTypeAnnotation,
+  functionTypeAnnotation,
 
   // Meta-annotations
   metaAnnotations,

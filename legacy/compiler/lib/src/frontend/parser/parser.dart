@@ -1617,6 +1617,42 @@ class Parser {
     return parsePrimaryExpression();
   }
 
+  /// Primary expressions parsing entry point.
+  @visibleForTesting
+  ExpressionNode parsePrimaryExpression() {
+    var tk = _peek();
+
+    ExpressionNode expression;
+
+    switch (tk.type) {
+      case TokenType.NUMBER:
+        expression = NumericLiteralNode(value: tk);
+        _advance(null);
+        break;
+      case TokenType.STRING_LITERAL:
+        expression = StringLiteralNode(value: tk);
+        _advance(null);
+        break;
+      case TokenType.STRING_FRAGMENT_START:
+        expression = parseFragmentOrInterpolationExpression();
+        break;
+      case TokenType.LEFT_PAREN:
+        expression = parseGroupingOrTupleLiteralExpression();
+        break;
+      case TokenType.LEFT_BRACKET:
+        expression = parseArrayLiteralExpression();
+        break;
+      case TokenType.IDENTIFIER:
+        expression = IdentifierNode(name: tk);
+        _advance(null);
+        break;
+      default:
+        throw UnimplementedError("Unexpected token: $tk");
+    }
+
+    return expression;
+  }
+
   /// See [StringLiteralNode], [StringFragmentNode]
   /// or [StringInterpolationNode] for more information.
   @visibleForTesting
@@ -1686,7 +1722,7 @@ class Parser {
     return StringInterpolationNode(fragments: fragments);
   }
 
-  /// See [GroupingExpressionNode] for more information.
+  /// See [GroupingExpressionNode] and [TupleLiteralNode] for more information.
   @visibleForTesting
   ExpressionNode parseGroupingOrTupleLiteralExpression() {
     final oldCurrent = current;
@@ -1698,7 +1734,16 @@ class Parser {
     if (_match(TokenType.COMMA)) {
       current = oldCurrent;
 
-      return parseTupleLiteralExpression();
+      final leftParen = _peek(); // Already consumed by parseList
+
+      final elements = parseList(
+        {TokenType.LEFT_PAREN},
+        {TokenType.RIGHT_PAREN},
+        TokenType.COMMA,
+        parseExpression,
+      );
+
+      return TupleLiteralNode(leftParen: leftParen, elements: elements);
     }
 
     _advance(
@@ -1707,21 +1752,6 @@ class Parser {
     );
 
     return GroupingExpressionNode(expression: expression, leftParen: leftParen);
-  }
-
-  /// See [TupleLiteralNode] for more information.
-  @visibleForTesting
-  ExpressionNode parseTupleLiteralExpression() {
-    final leftParen = _peek(); // Already consumed by parseList
-
-    final elements = parseList(
-      {TokenType.LEFT_PAREN},
-      {TokenType.RIGHT_PAREN},
-      TokenType.COMMA,
-      parseExpression,
-    );
-
-    return TupleLiteralNode(leftParen: leftParen, elements: elements);
   }
 
   /// See [ArrayLiteralNode] for more information.
@@ -1737,42 +1767,6 @@ class Parser {
     );
 
     return ArrayLiteralNode(leftBracket: leftBracket, elements: elements);
-  }
-
-  /// Primary expressions parsing entry point.
-  @visibleForTesting
-  ExpressionNode parsePrimaryExpression() {
-    var tk = _peek();
-
-    ExpressionNode expression;
-
-    switch (tk.type) {
-      case TokenType.NUMBER:
-        expression = NumericLiteralNode(value: tk);
-        _advance(null);
-        break;
-      case TokenType.STRING_LITERAL:
-        expression = StringLiteralNode(value: tk);
-        _advance(null);
-        break;
-      case TokenType.STRING_FRAGMENT_START:
-        expression = parseFragmentOrInterpolationExpression();
-        break;
-      case TokenType.LEFT_PAREN:
-        expression = parseGroupingOrTupleLiteralExpression();
-        break;
-      case TokenType.LEFT_BRACKET:
-        expression = parseArrayLiteralExpression();
-        break;
-      case TokenType.IDENTIFIER:
-        expression = IdentifierNode(name: tk);
-        _advance(null);
-        break;
-      default:
-        throw UnimplementedError("Unexpected token: $tk");
-    }
-
-    return expression;
   }
 
   @visibleForTesting
@@ -1922,12 +1916,24 @@ class Parser {
     if (_match(TokenType.LEFT_PAREN)) {
       final leftParen = _peek(); // Already consumed by parseList
 
-      final elements = parseList(
+      final elementsOrParameters = parseList(
         {TokenType.LEFT_PAREN},
         {TokenType.RIGHT_PAREN},
         TokenType.COMMA,
         parseTypeAnnotation,
       );
+
+      if (_match(TokenType.ARROW)) {
+        _advance(null); // Consume the arrow token
+
+        final returnType = parseTypeAnnotation();
+
+        return FunctionTypeAnnotation(
+          leftParen: leftParen,
+          parameters: elementsOrParameters,
+          returnType: returnType,
+        );
+      }
 
       Token? pointer;
 
@@ -1937,7 +1943,7 @@ class Parser {
 
       return TupleTypeAnnotation(
         leftParen: leftParen,
-        elements: elements,
+        elements: elementsOrParameters,
         pointer: pointer,
       );
     }
