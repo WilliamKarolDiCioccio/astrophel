@@ -281,7 +281,7 @@ class ClassDeclarationNode extends StatementNode {
   final Token? partialKeyword;
   final Token classKeyword;
   final IdentifierNode name;
-  final ConstructorDeclarationNode? constructor;
+  final List<ConstructorDeclarationNode> constructors;
   final DestructorDeclarationNode? destructor;
   final List<FieldDeclarationNode> fields;
   final List<MethodDeclarationNode> methods;
@@ -293,7 +293,7 @@ class ClassDeclarationNode extends StatementNode {
     required this.partialKeyword,
     required this.classKeyword,
     required this.name,
-    required this.constructor,
+    required this.constructors,
     required this.destructor,
     required this.fields,
     required this.methods,
@@ -309,7 +309,7 @@ class ClassDeclarationNode extends StatementNode {
       if (partialKeyword != null) 'partialKeyword': partialKeyword!.lexeme,
       'classKeyword': classKeyword.lexeme,
       'name': name.toJson(),
-      if (constructor != null) 'constructor': constructor!.toJson(),
+      'constructors': constructors.map((c) => c.toJson()).toList(),
       if (destructor != null) 'destructor': destructor!.toJson(),
       'fields': fields.map((f) => f.toJson()).toList(),
       'methods': methods.map((m) => m.toJson()).toList(),
@@ -322,7 +322,7 @@ class ClassDeclarationNode extends StatementNode {
     metaAnnotations,
     template,
     name,
-    constructor,
+    constructors,
     destructor,
     fields,
     methods,
@@ -350,7 +350,7 @@ class StructDeclarationNode extends StatementNode {
   final Template? template;
   final Token structKeyword;
   final IdentifierNode name;
-  final ConstructorDeclarationNode? constructor;
+  final List<ConstructorDeclarationNode> constructors;
   final DestructorDeclarationNode? destructor;
   final List<FieldDeclarationNode> fields;
   final List<UnionDeclarationNode> unions;
@@ -360,7 +360,7 @@ class StructDeclarationNode extends StatementNode {
     required this.template,
     required this.structKeyword,
     required this.name,
-    required this.constructor,
+    required this.constructors,
     required this.destructor,
     required this.fields,
     required this.unions,
@@ -374,7 +374,7 @@ class StructDeclarationNode extends StatementNode {
       if (template != null) 'template': template!.toJson(),
       'structKeyword': structKeyword.lexeme,
       'name': name.toJson(),
-      if (constructor != null) 'constructor': constructor!.toJson(),
+      'constructors': constructors.map((c) => c.toJson()).toList(),
       if (destructor != null) 'destructor': destructor!.toJson(),
       'fields': fields.map((f) => f.toJson()).toList(),
       'unions': unions.map((u) => u.toJson()).toList(),
@@ -387,7 +387,7 @@ class StructDeclarationNode extends StatementNode {
     template,
     structKeyword,
     name,
-    constructor,
+    constructors,
     destructor,
     fields,
     unions,

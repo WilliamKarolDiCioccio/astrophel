@@ -446,7 +446,7 @@ class Parser {
     final List<FieldDeclarationNode> fields = [];
     final List<MethodDeclarationNode> methods = [];
     final List<UnionDeclarationNode> unions = [];
-    ConstructorDeclarationNode? constructor;
+    List<ConstructorDeclarationNode> constructors = [];
     DestructorDeclarationNode? destructor;
 
     while (!_match(TokenType.RIGHT_BRACE)) {
@@ -472,12 +472,8 @@ class Parser {
       tk = _peek(); // Re-evaluate the token after parsing template.
 
       if (tk.type == TokenType.CONSTRUCTOR) {
-        if (constructor != null) {
-          throw UnimplementedError("Multiple constructors are not allowed");
-        } else {
-          constructor = parseConstructorDeclaration(metaAnnotations);
-          metaAnnotationsConsumed = true;
-        }
+        constructors.add(parseConstructorDeclaration(metaAnnotations));
+        metaAnnotationsConsumed = true;
       } else if (tk.type == TokenType.DESTRUCTOR) {
         if (destructor != null) {
           throw UnimplementedError("Multiple destructors are not allowed");
@@ -530,7 +526,7 @@ class Parser {
       partialKeyword: partialKeyword,
       classKeyword: classKeyword,
       name: IdentifierNode(name: name),
-      constructor: constructor,
+      constructors: constructors,
       destructor: destructor,
       fields: fields,
       methods: methods,
@@ -561,13 +557,14 @@ class Parser {
 
     final List<FieldDeclarationNode> fields = [];
     final List<UnionDeclarationNode> unions = [];
-    ConstructorDeclarationNode? constructor;
+    List<ConstructorDeclarationNode> constructors = [];
     DestructorDeclarationNode? destructor;
 
     while (!_match(TokenType.RIGHT_BRACE)) {
       var tk = _peek();
 
       MetaAnnotations? metaAnnotations;
+      bool metaAnnotationsConsumed = false;
 
       if (tk.type == TokenType.LEFT_BRACKET &&
           _matchIn(1, TokenType.ANNOTATION)) {
@@ -577,17 +574,15 @@ class Parser {
       tk = _peek(); // Re-evaluate the token after parsing meta annotations.
 
       if (tk.type == TokenType.CONSTRUCTOR) {
-        if (constructor != null) {
-          throw UnimplementedError("Multiple constructors are not allowed");
-        }
-
-        constructor = parseConstructorDeclaration(metaAnnotations);
+        constructors.add(parseConstructorDeclaration(metaAnnotations));
+        metaAnnotationsConsumed = true;
       } else if (tk.type == TokenType.DESTRUCTOR) {
         if (destructor != null) {
           throw UnimplementedError("Multiple destructors are not allowed");
         }
 
         destructor = parseDestructorDeclaration(metaAnnotations);
+        metaAnnotationsConsumed = true;
       } else if (tk.type == TokenType.UNION) {
         unions.add(parseUnionDeclaration());
       } else if (tk.type == TokenType.STORAGE_SPECIFIER ||
@@ -597,7 +592,7 @@ class Parser {
         throw UnimplementedError("Unexpected token: $tk");
       }
 
-      if (metaAnnotations != null) {
+      if (!metaAnnotationsConsumed && metaAnnotations != null) {
         throw UnimplementedError(
           "Meta-annotations are not allowed for ${tk.type} statements",
         );
@@ -614,7 +609,7 @@ class Parser {
       template: template,
       structKeyword: structKeyword,
       name: IdentifierNode(name: name),
-      constructor: constructor,
+      constructors: constructors,
       destructor: destructor,
       fields: fields,
       unions: unions,
